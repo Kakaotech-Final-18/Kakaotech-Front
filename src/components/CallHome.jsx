@@ -1,35 +1,35 @@
 import React, { useState } from 'react';
-import CallScreen from './CallScreen';
+import { useNavigate } from 'react-router-dom';
+import { initializeSocket } from '../services/SocketService';
 
 const CallHome = () => {
-  const [roomName, setRoomName] = useState('');
+  const [roomLink, setRoomLink] = useState('');
   const [email, setEmail] = useState('');
-  const [isInRoom, setIsInRoom] = useState(false);
+  const navigate = useNavigate();
+  const socket = initializeSocket('http://localhost:3000');
 
-  const handleSubmit = e => {
-    e.preventDefault();
-    if (roomName.trim() && email.trim()) {
-      setIsInRoom(true);
-    } else {
-      alert('Please enter a valid room name and email.');
+  const handleCreateRoom = () => {
+    socket.emit('create_room', roomName => {
+      const link = `${window.location.origin}/call/${roomName}`;
+      setRoomLink(link);
+    });
+  };
+
+  const handleJoinRoom = () => {
+    if (!email.trim()) {
+      alert('Please enter your email.');
+      return;
+    }
+    if (roomLink) {
+      const roomName = roomLink.split('/').pop(); // Extract roomName from URL
+      navigate(`/call/${roomName}?email=${encodeURIComponent(email)}`); // 이메일 전달
     }
   };
 
-  if (isInRoom) {
-    return <CallScreen roomName={roomName} email={email} />;
-  }
-
   return (
     <div>
-      <h1>Join a Room</h1>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Room Name"
-          value={roomName}
-          onChange={e => setRoomName(e.target.value)}
-          required
-        />
+      <h1>Create or Join a Room</h1>
+      <form>
         <input
           type="email"
           placeholder="Email"
@@ -37,10 +37,25 @@ const CallHome = () => {
           onChange={e => setEmail(e.target.value)}
           required
         />
-        <button type="submit">Join</button>
+        <button type="button" onClick={handleCreateRoom}>
+          Create Room
+        </button>
+        {roomLink && (
+          <div>
+            <p>Share this link to invite others:</p>
+            <p>
+              <a href={roomLink} target="_blank" rel="noopener noreferrer">
+                {roomLink}
+              </a>
+            </p>
+            <button type="button" onClick={handleJoinRoom}>
+              Join Room
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );
 };
 
-export default Home;
+export default CallHome;

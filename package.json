@@ -16,6 +16,7 @@
     "react-dom": "^18.3.1",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
+    "uuid": "^11.0.3",
     "webrtc-adapter": "^9.0.1"
   },
   "devDependencies": {

@@ -1,20 +1,25 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { getSocket, initializeSocket } from '../services/SocketService';
+import { useParams, useLocation } from 'react-router-dom';
+import { initializeSocket } from '../services/SocketService';
 import {
   getMedia,
   makeConnection,
   closeConnection,
 } from '../services/WebrtcService';
 
-const CallScreen = ({ roomName, email }) => {
+const CallScreen = () => {
+  const { roomName } = useParams(); // URL에서 방 이름 추출
+  const location = useLocation();
   const myVideoRef = useRef(null);
   const peerVideoRef = useRef(null);
   const [socket, setSocket] = useState(null);
   const [myStream, setMyStream] = useState(null);
   const [myPeerConnection, setMyPeerConnection] = useState(null);
 
+  // 이메일 추출
+  const email = new URLSearchParams(location.search).get('email');
+
   useEffect(() => {
-    // Socket 초기화 및 이벤트 핸들러 등록
     const socket = initializeSocket('http://localhost:3000');
     setSocket(socket);
 
@@ -23,7 +28,8 @@ const CallScreen = ({ roomName, email }) => {
     socket.on('offer', handleOffer);
     socket.on('answer', handleAnswer);
     socket.on('ice', handleIce);
-    socket.on('leave_room', handleLeaveRoom);
+    socket.on('room_not_found', handleRoomNotFound);
+    socket.on('peer_left', handlePeerLeft);
     socket.on('room_full', handleRoomFull);
 
     handleJoinRoom();
@@ -36,9 +42,14 @@ const CallScreen = ({ roomName, email }) => {
   }, []);
 
   const handleJoinRoom = async () => {
+    if (!email) {
+      alert('Email is required to join the room.');
+      return;
+    }
     try {
       const stream = await getMedia();
       setMyStream(stream);
+
       if (myVideoRef.current) {
         myVideoRef.current.srcObject = stream;
       }
@@ -46,24 +57,27 @@ const CallScreen = ({ roomName, email }) => {
       const connection = makeConnection(roomName, socket, handleAddStream);
       setMyPeerConnection(connection);
 
-      socket.emit('join_room', roomName, email, 'voice');
+      socket.emit('join_room', roomName, email); // 이메일 포함
     } catch (error) {
       console.error('Error joining room:', error);
     }
   };
 
+  const handleRoomNotFound = () => {
+    alert('Room not found!');
+  };
+
   const handleWelcomeSelf = async () => {
-    console.log('Joined room successfully!');
     if (myPeerConnection) {
-      // Create offer and send to peer
       const offer = await myPeerConnection.createOffer();
       await myPeerConnection.setLocalDescription(offer);
       socket.emit('offer', offer, roomName);
     }
   };
 
-  const handleWelcome = () => {
-    console.log('Peer joined the room!');
+  const handleWelcome = peerEmail => {
+    console.log(`${peerEmail} has joined the room.`);
+    alert(`${peerEmail} has joined the room.`);
   };
 
   const handleOffer = async offer => {
@@ -103,12 +117,8 @@ const CallScreen = ({ roomName, email }) => {
     alert('Room is already full!');
   };
 
-  const handleNotificationWelcome = message => {
-    alert(message);
-  };
-
-  const handleNotificationBye = message => {
-    alert(message);
+  const handlePeerLeft = peerEmail => {
+    alert(`${peerEmail} has left the room.`);
   };
 
   return (

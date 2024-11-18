@@ -109,8 +109,23 @@ const CallScreen = () => {
   };
 
   const handleLeaveRoom = () => {
-    console.log('Peer left the room');
-    if (myPeerConnection) closeConnection();
+    // WebRTC 연결 종료
+    if (myPeerConnection) {
+      closeConnection();
+      setMyPeerConnection(null);
+    }
+
+    // 스트림 정리
+    if (myStream) {
+      myStream.getTracks().forEach(track => track.stop());
+      setMyStream(null);
+    }
+
+    // 소켓에서 방 떠나는 이벤트 전송
+    socket.emit('leave_room', roomName);
+
+    // CallHome으로 이동
+    navigate('/call/home');
   };
 
   const handleRoomFull = () => {

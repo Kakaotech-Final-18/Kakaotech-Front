@@ -11,9 +11,10 @@ export const initializeSocket = () => {
     const serverUrl = import.meta.env.VITE_SOCKET_URL || window.location.origin;
     // 소켓 초기화
     socket = io(serverUrl, {
-      transports: ['websocket'], // 기본 WebSocket 사용
-      reconnection: true, // 자동 재연결 활성화
-      reconnectionAttempts: 5, // 재연결 시도 횟수
+      transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
 
     // 연결 확인

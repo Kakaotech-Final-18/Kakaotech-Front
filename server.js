@@ -1,9 +1,25 @@
 import express from 'express';
 import http from 'http';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 
 const app = express();
+
+// 경로 설정 (현재 디렉토리 기준으로 dist 폴더 사용)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const buildPath = path.join(__dirname, 'dist');
+
+// React 정적 파일 제공
+app.use(express.static(buildPath));
+
+// React 라우터를 위한 기본 라우트 설정
+app.get('*', (req, res) => {
+  res.sendFile(path.join(buildPath, 'index.html'));
+});
+
 const httpServer = http.createServer(app);
 const io = new Server(httpServer);
 

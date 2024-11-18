@@ -6,7 +6,7 @@ const CallHome = () => {
   const [roomLink, setRoomLink] = useState('');
   const [email, setEmail] = useState('');
   const navigate = useNavigate();
-  const socket = initializeSocket('http://localhost:3000');
+  const socket = initializeSocket();
 
   const handleCreateRoom = () => {
     socket.emit('create_room', roomName => {

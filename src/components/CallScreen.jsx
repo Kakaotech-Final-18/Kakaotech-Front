@@ -1,29 +1,30 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { initializeSocket } from '../services/SocketService';
 import {
   getMedia,
   makeConnection,
   closeConnection,
 } from '../services/WebrtcService';
+import { useSocket } from '../context/SocketContext';
 
 const CallScreen = () => {
-  const { roomName } = useParams(); // URL에서 방 이름 추출
   const location = useLocation();
+  const navigate = useNavigate();
+
   const myVideoRef = useRef(null);
   const peerVideoRef = useRef(null);
-  const [socket, setSocket] = useState(null);
   const [myStream, setMyStream] = useState(null);
   const [myPeerConnection, setMyPeerConnection] = useState(null);
 
-  // 이메일 추출
-  const emailFromUrl = new URLSearchParams(location.search).get('email');
-  // TODO : 나중에 로그인 추가되면 고치기
-  const email = emailFromUrl || 'callee@parrotalk.com';
+  const { roomName } = useParams();
+  const socket = useSocket();
+  const [email, setEmail] = useState(
+    location.state?.email || 'callee@parrotalk.com'
+  ); // 기본값 세팅
 
   useEffect(() => {
-    const socket = initializeSocket('http://localhost:3000');
-    setSocket(socket);
+    console.log('Extracted email:', email);
 
     socket.on('welcome_self', handleWelcomeSelf);
     socket.on('welcome', handleWelcome);
@@ -37,17 +38,29 @@ const CallScreen = () => {
     handleJoinRoom();
 
     return () => {
-      socket.disconnect();
       if (myPeerConnection) closeConnection();
       if (myStream) myStream.getTracks().forEach(track => track.stop());
     };
   }, []);
 
   const handleJoinRoom = async () => {
-    if (!email) {
-      alert('Email is required to join the room.');
+    if (!socket) {
+      alert('Socket is not initialized');
+      navigate('/call/home');
       return;
     }
+    if (!roomName) {
+      alert('roomname required');
+      navigate('/call/home');
+      return;
+    }
+    if (!email) {
+      setEmail('callee@parrotalk.com');
+      alert('email required');
+      navigate('/call/home');
+      return;
+    }
+
     try {
       const stream = await getMedia();
       setMyStream(stream);
@@ -56,10 +69,15 @@ const CallScreen = () => {
         myVideoRef.current.srcObject = stream;
       }
 
-      const connection = makeConnection(roomName, socket, handleAddStream);
+      const connection = makeConnection(
+        stream,
+        roomName,
+        socket,
+        handleAddStream
+      );
       setMyPeerConnection(connection);
 
-      socket.emit('join_room', roomName, email); // 이메일 포함
+      socket.emit('join_room', roomName, email);
     } catch (error) {
       console.error('Error joining room:', error);
     }

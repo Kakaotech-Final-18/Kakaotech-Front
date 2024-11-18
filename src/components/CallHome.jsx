@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { initializeSocket } from '../services/SocketService';
+import { useSocket } from '../context/SocketContext';
 
 const CallHome = () => {
   const [roomLink, setRoomLink] = useState('');
   const [email, setEmail] = useState('');
   const navigate = useNavigate();
-  const socket = initializeSocket();
+  const socket = useSocket();
 
   const handleCreateRoom = () => {
     socket.emit('create_room', roomName => {
@@ -22,8 +23,11 @@ const CallHome = () => {
       return;
     }
     if (roomLink) {
-      const roomName = roomLink.split('/').pop(); // Extract roomName from URL
-      navigate(`/call/${roomName}?email=${encodeURIComponent(email)}`); // 이메일 전달
+      const roomName = roomLink.split('/').pop();
+      console.log(`browser: email -> ${email}, socket -> ${socket}`);
+      navigate(`/call/${roomName}`, {
+        state: { email },
+      });
     }
   };
 

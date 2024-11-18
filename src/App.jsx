@@ -7,7 +7,7 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<CallHome />} />
+        <Route path="/call/home" element={<CallHome />} />
         <Route path="/call/:roomName" element={<CallScreen />} />
       </Routes>
     </Router>

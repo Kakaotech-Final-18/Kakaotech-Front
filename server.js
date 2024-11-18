@@ -38,6 +38,8 @@ io.on('connection', socket => {
 
   // 방 참여 로직
   socket.on('join_room', (roomName, email, screenType) => {
+    console.log(`roomname : ${roomName}`);
+    console.log(`${email} joined room: ${roomName}`);
     const room = io.sockets.adapter.rooms.get(roomName);
     const userCount = room ? room.size : 0;
 

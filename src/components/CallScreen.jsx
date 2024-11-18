@@ -61,6 +61,9 @@ const CallScreen = () => {
       return;
     }
 
+    // BUG : 공유받은 외부 인원이 들어오면 join_room 이벤트가 제대로 발생하지 않음.(서버 로깅 안 찍힘)
+    // roomName이나 email이 제대로 들어오지 않는거 같은데,
+    // 막상 위의 세가지 if문에서 걸리지는 않음. 뭔가 들어 있긴 한가봄...
     try {
       const stream = await getMedia();
       setMyStream(stream);

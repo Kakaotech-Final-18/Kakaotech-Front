@@ -17,7 +17,9 @@ const CallScreen = () => {
   const [myPeerConnection, setMyPeerConnection] = useState(null);
 
   // 이메일 추출
-  const email = new URLSearchParams(location.search).get('email');
+  const emailFromUrl = new URLSearchParams(location.search).get('email');
+  // TODO : 나중에 로그인 추가되면 고치기
+  const email = emailFromUrl || 'callee@parrotalk.com';
 
   useEffect(() => {
     const socket = initializeSocket('http://localhost:3000');

@@ -15,6 +15,7 @@ const CallHome = () => {
     });
   };
 
+  // TODO : 나중에 로그인 추가되면 이메일 관련 고치기
   const handleJoinRoom = () => {
     if (!email.trim()) {
       alert('Please enter your email.');

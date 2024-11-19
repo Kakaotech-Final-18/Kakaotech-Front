@@ -56,6 +56,7 @@ io.on('connection', socket => {
       socket.emit('welcome_self');
       // 상대방에게 welcome 이벤트
       socket.to(roomName).emit('welcome');
+      socket.to(roomName).emit('notification_hi', email);
     }
   });
 

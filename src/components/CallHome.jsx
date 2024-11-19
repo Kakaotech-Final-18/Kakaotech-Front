@@ -13,6 +13,7 @@ const CallHome = () => {
     socket.emit('create_room', roomName => {
       const link = `${window.location.origin}/call/${roomName}`;
       setRoomLink(link);
+      console.log('Room created with link:', link);
     });
   };
 

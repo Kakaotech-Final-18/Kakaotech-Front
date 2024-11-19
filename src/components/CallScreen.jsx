@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { initializeSocket } from '../services/SocketService';
 import {
   getMedia,
   makeConnection,
@@ -14,8 +13,10 @@ const CallScreen = () => {
 
   const myVideoRef = useRef(null);
   const peerVideoRef = useRef(null);
-  const [myStream, setMyStream] = useState(null);
-  const [myPeerConnection, setMyPeerConnection] = useState(null);
+
+  // react의 상태 비동기성으로 인해 usestate 대신 useRef로 바꿈
+  const myStream = useRef(null);
+  const myPeerConnection = useRef(null);
 
   const { roomName } = useParams();
   const socket = useSocket();
@@ -28,6 +29,7 @@ const CallScreen = () => {
 
     socket.on('welcome_self', handleWelcomeSelf);
     socket.on('welcome', handleWelcome);
+    socket.on('notification_hi', handleNotificationHi);
     socket.on('offer', handleOffer);
     socket.on('answer', handleAnswer);
     socket.on('ice', handleIce);
@@ -44,19 +46,8 @@ const CallScreen = () => {
   }, []);
 
   const handleJoinRoom = async () => {
-    if (!socket) {
-      alert('Socket is not initialized');
-      navigate('/call/home');
-      return;
-    }
-    if (!roomName) {
-      alert('roomname required');
-      navigate('/call/home');
-      return;
-    }
-    if (!email) {
-      setEmail('callee@parrotalk.com');
-      alert('email required');
+    if (!roomName || !email || !socket) {
+      alert('error occured. going back to home.');
       navigate('/call/home');
       return;
     }
@@ -64,23 +55,34 @@ const CallScreen = () => {
     // BUG : 공유받은 외부 인원이 들어오면 join_room 이벤트가 제대로 발생하지 않음.(서버 로깅 안 찍힘)
     // roomName이나 email이 제대로 들어오지 않는거 같은데,
     // 막상 위의 세가지 if문에서 걸리지는 않음. 뭔가 들어 있긴 한가봄...
+    // update : myPeerConnection 객체가 제대로 생성이 안되는거 같음.
+    // update2 : 로그 찍어보니까 makeConnection에서 stream이 null 파라미터로 전달됨
     try {
+      console.log('Joining room:', roomName, 'with email:', email);
       const stream = await getMedia();
-      setMyStream(stream);
+      console.log('Media stream obtained:', stream);
+      myStream.current = stream;
 
       if (myVideoRef.current) {
         myVideoRef.current.srcObject = stream;
       }
 
-      const connection = makeConnection(
-        stream,
-        roomName,
-        socket,
-        handleAddStream
-      );
-      setMyPeerConnection(connection);
+      console.log('Initializing WebRTC connection...');
+      console.log('Socket passed to makeConnection:', socket.id);
+      const connection = makeConnection(socket, roomName, handleAddStream);
+      if (!connection) {
+        console.error(
+          'makeConnection returned null. WebRTC initialization failed.'
+        );
+        return;
+      }
+      myPeerConnection.current = connection;
+      console.log('Connection returned from makeConnection:', connection);
+      setTimeout(() => {
+        console.log('myPeerConnection after state update:', connection);
+      }, 0); // 비동기 상태 업데이트 확인용
 
-      socket.emit('join_room', roomName, email);
+      socket.emit('join_room', roomName, email, 'voice');
     } catch (error) {
       console.error('Error joining room:', error);
     }
@@ -91,61 +93,120 @@ const CallScreen = () => {
   };
 
   const handleWelcomeSelf = async () => {
-    if (myPeerConnection) {
-      const offer = await myPeerConnection.createOffer();
-      await myPeerConnection.setLocalDescription(offer);
+    console.log('Myself joined the room:', roomName);
+    if (
+      !myPeerConnection.current ||
+      !(myPeerConnection.current instanceof RTCPeerConnection)
+    ) {
+      console.error(
+        'Invalid myPeerConnection in handleWelcomeSelf:',
+        myPeerConnection.current
+      );
+      return;
+    }
+
+    try {
+      const offer = await myPeerConnection.current.createOffer();
+      console.log('Offer created:', offer);
+
+      await myPeerConnection.current.setLocalDescription(offer);
+      console.log(
+        'LocalDescription set:',
+        myPeerConnection.current.localDescription
+      );
+
       socket.emit('offer', offer, roomName);
+      console.log('Offer sent to room:', roomName);
+    } catch (error) {
+      console.error('Error during offer creation or sending:', error);
     }
   };
 
-  const handleWelcome = peerEmail => {
+  const handleWelcome = () => {
+    console.log('Peer joined the room:', roomName);
+    if (myPeerConnection) {
+      const myDataChannel = myPeerConnection.createDataChannel('chat');
+      console.log('DataChannel created:', myDataChannel);
+      myDataChannel.onmessage = event =>
+        console.log('Received message:', event.data);
+    }
+  };
+
+  const handleNotificationHi = peerEmail => {
     console.log(`${peerEmail} has joined the room.`);
     alert(`${peerEmail} has joined the room.`);
   };
 
   const handleOffer = async offer => {
+    console.log('Offer received:', offer);
     if (myPeerConnection) {
       await myPeerConnection.setRemoteDescription(offer);
-
       const answer = await myPeerConnection.createAnswer();
       await myPeerConnection.setLocalDescription(answer);
+      console.log('Answer created and sent:', answer);
       socket.emit('answer', answer, roomName);
     }
   };
 
   const handleAnswer = async answer => {
+    console.log('Answer received:', answer);
     if (myPeerConnection) {
       await myPeerConnection.setRemoteDescription(answer);
     }
   };
 
   const handleIce = async ice => {
+    console.log('ICE candidate received:', ice);
     if (myPeerConnection) {
       await myPeerConnection.addIceCandidate(ice);
     }
   };
 
   const handleAddStream = stream => {
+    console.log('Stream added:', stream);
     if (peerVideoRef.current) {
       peerVideoRef.current.srcObject = stream;
     }
   };
 
   const handleLeaveRoom = () => {
-    // WebRTC 연결 종료
-    if (myPeerConnection) {
-      closeConnection();
-      setMyPeerConnection(null);
+    console.log(`${email} leaves room : ${roomName}`);
+
+    // 소켓에서 방 떠나는 이벤트 전송
+    if (socket) {
+      console.log('Sending leave_room event to server.');
+      socket.emit('leave_room', roomName);
+    } else {
+      console.warn('Socket is not initialized.');
     }
 
     // 스트림 정리
-    if (myStream) {
-      myStream.getTracks().forEach(track => track.stop());
-      setMyStream(null);
+    if (myStream.current && myStream.current instanceof MediaStream) {
+      console.log('Stopping media stream tracks...');
+      myStream.current.getTracks().forEach(track => track.stop());
+      console.log('Media stream tracks stopped.');
+      myStream.current = null;
+      console.log('Media stream stopped and cleared.');
+    } else {
+      console.warn(
+        'myStream.current is not a valid MediaStream or already cleared:',
+        myStream.current
+      );
     }
 
-    // 소켓에서 방 떠나는 이벤트 전송
-    socket.emit('leave_room', roomName);
+    // WebRTC 연결 종료
+    if (myPeerConnection.current) {
+      console.log('Closing peer connection...');
+      try {
+        myPeerConnection.current.close();
+        myPeerConnection.current = null;
+        console.log('PeerConnection closed and cleared.');
+      } catch (error) {
+        console.error('Error closing PeerConnection:', error);
+      }
+    } else {
+      console.warn('myPeerConnection.current is already null or undefined.');
+    }
 
     // CallHome으로 이동
     navigate('/call/home');
@@ -157,6 +218,8 @@ const CallScreen = () => {
 
   const handlePeerLeft = peerEmail => {
     alert(`${peerEmail} has left the room.`);
+    alert('press ok to end call.');
+    handleLeaveRoom();
   };
 
   return (

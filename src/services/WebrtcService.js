@@ -1,3 +1,4 @@
+import { useSocket } from '../context/SocketContext';
 // WebRTC 관련 로직
 let myPeerConnection;
 let myStream;
@@ -20,7 +21,9 @@ export const getMedia = async () => {
   }
 };
 
-export const makeConnection = (roomName, socket, onAddStream) => {
+export const makeConnection = (socket, roomName, onAddStream) => {
+  console.log('Socket fetched from context:', socket.id);
+  console.log('(webrtcservice) Creating RTCPeerConnection...');
   const myPeerConnection = new RTCPeerConnection({
     iceServers: [
       {
@@ -35,18 +38,48 @@ export const makeConnection = (roomName, socket, onAddStream) => {
     ],
   });
 
+  if (!(myPeerConnection instanceof RTCPeerConnection)) {
+    console.error('(webrtcservice) Failed to create RTCPeerConnection');
+    return null;
+  }
+
+  console.log('(webrtcservice) RTCPeerConnection created:', myPeerConnection);
+  if (!myStream) {
+    console.error(
+      '(webrtcservice) Stream is null or undefined in makeConnection'
+    );
+    return null;
+  }
   // ICE Candidate 이벤트 핸들러
   myPeerConnection.addEventListener('icecandidate', event => {
+    console.log(
+      '(webrtcservice) ICE Candidate event triggered:',
+      event.candidate
+    );
     if (event.candidate) {
-      socket.emit('ice', event.candidate, roomName);
+      console.log('Current socket state:', socket.id);
+      if (socket && typeof socket.emit === 'function') {
+        socket.emit('ice', event.candidate, roomName);
+        console.log('(webrtcservice) sent ice candidate ', event.candidate);
+      } else {
+        console.error(
+          '(webrtcservice) Invalid socket during ICE candidate handling:',
+          socket
+        );
+      }
     }
   });
 
   // AddStream 이벤트 핸들러
   myPeerConnection.addEventListener('addstream', event => {
+    console.log('(webrtcservice) Remote stream added:', event.stream);
     if (onAddStream) onAddStream(event.stream);
   });
 
+  console.log(
+    '(webrtcservice) Adding tracks to PeerConnection:',
+    myStream.getTracks()
+  );
   // 브라우저의 카메라 및 마이크 스트림을 PeerConnection에 추가
   myStream.getTracks().forEach(track => {
     myPeerConnection.addTrack(track, myStream);

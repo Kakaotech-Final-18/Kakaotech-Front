@@ -26,7 +26,22 @@ const CallScreen = () => {
 
   useEffect(() => {
     console.log('Extracted email:', email);
+    if (socket && socket.connected) {
+      registerSocketEvents();
+      handleJoinRoom();
+    } else {
+      console.warn('Socket is not connected. Waiting for connection...');
+      socket.on('connect', () => {
+        console.log('Socket connected:', socket.id);
+        registerSocketEvents();
+        handleJoinRoom();
+      });
+    }
 
+    return () => {};
+  }, []);
+
+  const registerSocketEvents = () => {
     socket.on('welcome_self', handleWelcomeSelf);
     socket.on('welcome', handleWelcome);
     socket.on('notification_hi', handleNotificationHi);
@@ -36,11 +51,8 @@ const CallScreen = () => {
     socket.on('room_not_found', handleRoomNotFound);
     socket.on('peer_left', handlePeerLeft);
     socket.on('room_full', handleRoomFull);
-
-    handleJoinRoom();
-
-    return () => {};
-  }, []);
+    console.log('Socket events registered.');
+  };
 
   const handleJoinRoom = async () => {
     if (!roomName || !email || !socket) {
@@ -72,7 +84,7 @@ const CallScreen = () => {
       console.log('Connection returned from makeConnection:', connection);
       setTimeout(() => {
         console.log('myPeerConnection after state update:', connection);
-      }, 0); // 비동기 상태 업데이트 확인용
+      }, 0);
 
       socket.emit('join_room', roomName, email, 'voice');
     } catch (error) {

@@ -39,10 +39,7 @@ const CallScreen = () => {
 
     handleJoinRoom();
 
-    return () => {
-      if (myPeerConnection) closeConnection();
-      if (myStream) myStream.getTracks().forEach(track => track.stop());
-    };
+    return () => {};
   }, []);
 
   const handleJoinRoom = async () => {
@@ -52,11 +49,6 @@ const CallScreen = () => {
       return;
     }
 
-    // BUG : 공유받은 외부 인원이 들어오면 join_room 이벤트가 제대로 발생하지 않음.(서버 로깅 안 찍힘)
-    // roomName이나 email이 제대로 들어오지 않는거 같은데,
-    // 막상 위의 세가지 if문에서 걸리지는 않음. 뭔가 들어 있긴 한가봄...
-    // update : myPeerConnection 객체가 제대로 생성이 안되는거 같음.
-    // update2 : 로그 찍어보니까 makeConnection에서 stream이 null 파라미터로 전달됨
     try {
       console.log('Joining room:', roomName, 'with email:', email);
       const stream = await getMedia();
@@ -183,8 +175,12 @@ const CallScreen = () => {
     // 스트림 정리
     if (myStream.current && myStream.current instanceof MediaStream) {
       console.log('Stopping media stream tracks...');
-      myStream.current.getTracks().forEach(track => track.stop());
-      console.log('Media stream tracks stopped.');
+      try {
+        myStream.current.getTracks().forEach(track => track.stop());
+        console.log('Media stream tracks stopped.');
+      } catch (error) {
+        console.error('Error stopping media stream tracks:', error);
+      }
       myStream.current = null;
       console.log('Media stream stopped and cleared.');
     } else {

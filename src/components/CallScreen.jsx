@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getMedia, makeConnection } from '../services/WebrtcService';
 import { useSocket } from '../context/SocketContext';
+import ChatBox from './ChatBox';
 
 const CallScreen = () => {
   const location = useLocation();
@@ -15,9 +16,13 @@ const CallScreen = () => {
 
   const { roomName } = useParams();
   const socket = useSocket();
+
   const [email, setEmail] = useState(
     location.state?.email || 'callee@parrotalk.com'
   );
+  // 'voice' or 'chat'
+  const [screenType, setScreenType] = useState(null);
+  const [isSelectionLocked, setSelectionLocked] = useState(false);
 
   useEffect(() => {
     console.log('Extracted email:', email);
@@ -25,12 +30,10 @@ const CallScreen = () => {
     const initialize = async () => {
       if (socket && socket.connected) {
         registerSocketEvents();
-        handleJoinRoom();
       } else {
         socket.on('connect', () => {
           console.log('Socket connected:', socket.id);
           registerSocketEvents();
-          handleJoinRoom();
         });
       }
     };
@@ -66,12 +69,14 @@ const CallScreen = () => {
     console.log('Socket events registered.');
   };
 
-  const handleJoinRoom = async () => {
+  const handleStartCall = async () => {
     if (!roomName || !email || !socket) {
       alert('error occured. going back to home.');
       navigate('/call/home');
       return;
     }
+
+    setSelectionLocked(true);
 
     try {
       console.log('Joining room:', roomName, 'with email:', email);
@@ -257,9 +262,50 @@ const CallScreen = () => {
 
   return (
     <div id="call">
-      <video ref={myVideoRef} autoPlay playsInline width="0" height="0" muted />
-      <video ref={peerVideoRef} autoPlay playsInline width="0" height="0" />
-      <button onClick={handleLeaveRoom}>Leave Room</button>
+      {!isSelectionLocked ? (
+        <div id="selection">
+          <h2>Select Call Mode</h2>
+          <label>
+            <input
+              type="radio"
+              name="screenType"
+              value="voice"
+              onChange={() => setScreenType('voice')}
+            />
+            Voice Only
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="screenType"
+              value="chat"
+              onChange={() => setScreenType('chat')}
+            />
+            With Chat
+          </label>
+          <button disabled={!screenType} onClick={handleStartCall}>
+            Confirm
+          </button>
+        </div>
+      ) : (
+        <>
+          {screenType === 'chat' && (
+            <div id="chatBox">
+              <ChatBox />
+            </div>
+          )}
+          <video
+            ref={myVideoRef}
+            autoPlay
+            playsInline
+            width="0"
+            height="0"
+            muted
+          />
+          <video ref={peerVideoRef} autoPlay playsInline width="0" height="0" />
+          <button onClick={handleLeaveRoom}>Leave Room</button>
+        </>
+      )}
     </div>
   );
 };

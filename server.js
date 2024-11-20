@@ -4,6 +4,16 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
+import AwsTranscribeService from './src/services/AwsTranscribeService.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const transcribeService = new AwsTranscribeService(
+  process.env.AWS_REGION,
+  process.env.AWS_ACCESS_ID,
+  process.env.AWS_SECRET_ID
+);
 
 const app = express();
 
@@ -63,8 +73,27 @@ io.on('connection', socket => {
       // 상대방에게 welcome 이벤트
       socket.to(roomName).emit('welcome');
       socket.to(roomName).emit('notification_hi', email);
+
+      // With Chat 모드일 경우 Transcribe 시작
+      if (screenType === 'chat') {
+        transcribeService.addAudioStream(roomName);
+        transcribeService.startTranscribe(roomName, io);
+      }
     }
   });
+
+  // 리스너를 변수로 할당해, 동일 참조를 사용해 제거할 수 있도록 수정
+  const handleAudioChunk = (chunk, roomName) => {
+    if (
+      typeof roomName === 'string' &&
+      transcribeService.roomAudioStreams[roomName]
+    ) {
+      transcribeService.roomAudioStreams[roomName].write(chunk);
+    }
+  };
+
+  // Audio chunk 이벤트 등록
+  socket.on('audio_chunk', handleAudioChunk);
 
   // Offer 이벤트
   socket.on('offer', (offer, roomName) => {
@@ -83,22 +112,34 @@ io.on('connection', socket => {
 
   // 방 퇴장 로직
   socket.on('leave_room', roomName => {
+    console.log(`User ${socket.id} is leaving room: ${roomName}`);
+
+    socket.off('audio_chunk', handleAudioChunk);
+    console.log(`[Audio] audio_chunk listener removed for room: ${roomName}`);
+
     const userIndex = rooms[roomName]?.findIndex(user => user.id === socket.id);
     if (userIndex !== -1) {
-      const userEmail = rooms[roomName][userIndex].email; // 이메일 가져오기
-      rooms[roomName].splice(userIndex, 1); // 사용자 제거
-
-      // 방이 비어있으면 삭제
-      if (rooms[roomName].length === 0) {
-        delete rooms[roomName];
-      }
-
-      // 다른 사용자에게 알림
+      const userEmail = rooms[roomName][userIndex].email;
+      rooms[roomName].splice(userIndex, 1);
       socket.to(roomName).emit('peer_left', userEmail);
       console.log(`${userEmail} has left the room: ${roomName}`);
     }
 
     socket.leave(roomName);
+
+    const userCount = io.sockets.adapter.rooms.get(roomName)?.size || 0;
+    if (userCount === 0) {
+      console.log(`[Room] Last user left. Cleaning up room: ${roomName}`);
+      transcribeService.stopTranscribe(roomName); // AWS Transcribe 및 스트림 종료
+      delete rooms[roomName];
+    }
+  });
+
+  socket.on('stop_transcribe', roomName => {
+    if (transcribeService.roomAudioStreams[roomName]) {
+      console.log(`[Transcribe] Manual stop request for room: ${roomName}`);
+      transcribeService.stopTranscribe(roomName); // Transcribe 세션 종료
+    }
   });
 
   // 연결 해제 처리

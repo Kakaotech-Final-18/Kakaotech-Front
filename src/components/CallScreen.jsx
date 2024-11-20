@@ -226,22 +226,49 @@ const CallScreen = () => {
     }
   };
 
-  const handleAddStream = stream => {
+  const handleAddStream = async stream => {
     console.log('Stream added:', stream);
+
     if (peerVideoRef.current) {
       peerVideoRef.current.srcObject = stream;
     }
+
+    const audioContext = new AudioContext();
+
+    await audioContext.audioWorklet.addModule('/audio-processor.js');
+    console.log('Audio Worklet Module loaded');
+
+    const source = audioContext.createMediaStreamSource(stream);
+    const processor = new AudioWorkletNode(audioContext, 'audio-processor');
+
+    processor.port.onmessage = event => {
+      const audioChunk = event.data;
+      console.log('Audio chunk received:', audioChunk);
+
+      if (screenType === 'chat') {
+        socket.emit('audio_chunk', audioChunk, roomName);
+      }
+    };
+
+    source.connect(processor);
+    console.log('AudioProcessor connected to MediaStreamSource');
   };
 
   const handleLeaveRoom = () => {
     console.log(`${email} leaves room : ${roomName}`);
 
-    // 소켓에서 방 떠나는 이벤트 전송
-    if (socket) {
-      console.log('Sending leave_room event to server.');
-      socket.emit('leave_room', roomName);
+    // WebRTC 연결 종료
+    if (myPeerConnection.current) {
+      console.log('Closing peer connection...');
+      try {
+        myPeerConnection.current.close();
+        myPeerConnection.current = null;
+        console.log('PeerConnection closed and cleared.');
+      } catch (error) {
+        console.error('Error closing PeerConnection:', error);
+      }
     } else {
-      console.warn('Socket is not initialized.');
+      console.warn('myPeerConnection.current is already null or undefined.');
     }
 
     // 스트림 정리
@@ -262,18 +289,18 @@ const CallScreen = () => {
       );
     }
 
-    // WebRTC 연결 종료
-    if (myPeerConnection.current) {
-      console.log('Closing peer connection...');
-      try {
-        myPeerConnection.current.close();
-        myPeerConnection.current = null;
-        console.log('PeerConnection closed and cleared.');
-      } catch (error) {
-        console.error('Error closing PeerConnection:', error);
+    // 소켓에서 방 떠나는 이벤트 전송
+    if (socket) {
+      console.log('Sending leave_room event to server.');
+      socket.emit('leave_room', roomName);
+
+      // Transcribe 종료
+      if (screenType === 'chat') {
+        console.log('Ending Transcribe session for room:', roomName);
+        socket.emit('stop_transcribe', roomName); // 서버에서 Transcribe 종료
       }
     } else {
-      console.warn('myPeerConnection.current is already null or undefined.');
+      console.warn('Socket is not initialized.');
     }
 
     navigate('/call/home');

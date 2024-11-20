@@ -1,10 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import {
-  getMedia,
-  makeConnection,
-  closeConnection,
-} from '../services/WebrtcService';
+import { getMedia, makeConnection } from '../services/WebrtcService';
 import { useSocket } from '../context/SocketContext';
 
 const CallScreen = () => {
@@ -26,22 +22,39 @@ const CallScreen = () => {
 
   useEffect(() => {
     console.log('Extracted email:', email);
-    if (socket && socket.connected) {
-      registerSocketEvents();
-      handleJoinRoom();
-    } else {
-      console.warn('Socket is not connected. Waiting for connection...');
-      socket.on('connect', () => {
-        console.log('Socket connected:', socket.id);
+
+    const initialize = async () => {
+      if (!socket) {
+        console.warn('Socket is not ready yet. Initializing...');
+      } else if (!socket.connected) {
+        console.log('Socket is not connected. Waiting for connection...');
+        socket.on('connect', () => {
+          console.log('Socket connected:', socket.id);
+          registerSocketEvents();
+          handleJoinRoom();
+        });
+      } else {
         registerSocketEvents();
         handleJoinRoom();
-      });
-    }
+      }
+    };
+
+    initialize();
 
     return () => {};
   }, []);
 
   const registerSocketEvents = () => {
+    socket.off('welcome_self');
+    socket.off('welcome');
+    socket.off('notification_hi');
+    socket.off('offer');
+    socket.off('answer');
+    socket.off('ice');
+    socket.off('room_not_found');
+    socket.off('peer_left');
+    socket.off('room_full');
+
     socket.on('welcome_self', handleWelcomeSelf);
     socket.on('welcome', handleWelcome);
     socket.on('notification_hi', handleNotificationHi);
@@ -68,6 +81,7 @@ const CallScreen = () => {
       myStream.current = stream;
 
       if (myVideoRef.current) {
+        console.log('myStream added.');
         myVideoRef.current.srcObject = stream;
       }
 

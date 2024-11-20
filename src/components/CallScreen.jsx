@@ -10,7 +10,6 @@ const CallScreen = () => {
   const myVideoRef = useRef(null);
   const peerVideoRef = useRef(null);
 
-  // react의 상태 비동기성으로 인해 usestate 대신 useRef로 바꿈
   const myStream = useRef(null);
   const myPeerConnection = useRef(null);
 
@@ -18,24 +17,21 @@ const CallScreen = () => {
   const socket = useSocket();
   const [email, setEmail] = useState(
     location.state?.email || 'callee@parrotalk.com'
-  ); // 기본값 세팅
+  );
 
   useEffect(() => {
     console.log('Extracted email:', email);
 
     const initialize = async () => {
-      if (!socket) {
-        console.warn('Socket is not ready yet. Initializing...');
-      } else if (!socket.connected) {
-        console.log('Socket is not connected. Waiting for connection...');
+      if (socket && socket.connected) {
+        registerSocketEvents();
+        handleJoinRoom();
+      } else {
         socket.on('connect', () => {
           console.log('Socket connected:', socket.id);
           registerSocketEvents();
           handleJoinRoom();
         });
-      } else {
-        registerSocketEvents();
-        handleJoinRoom();
       }
     };
 
@@ -44,7 +40,7 @@ const CallScreen = () => {
     return () => {};
   }, []);
 
-  const registerSocketEvents = () => {
+  const cleanupSocketEvents = () => {
     socket.off('welcome_self');
     socket.off('welcome');
     socket.off('notification_hi');
@@ -54,7 +50,10 @@ const CallScreen = () => {
     socket.off('room_not_found');
     socket.off('peer_left');
     socket.off('room_full');
+  };
 
+  const registerSocketEvents = () => {
+    cleanupSocketEvents();
     socket.on('welcome_self', handleWelcomeSelf);
     socket.on('welcome', handleWelcome);
     socket.on('notification_hi', handleNotificationHi);
@@ -86,19 +85,14 @@ const CallScreen = () => {
       }
 
       console.log('Initializing WebRTC connection...');
-      console.log('Socket passed to makeConnection:', socket.id);
-      const connection = makeConnection(socket, roomName, handleAddStream);
-      if (!connection) {
-        console.error(
-          'makeConnection returned null. WebRTC initialization failed.'
+      if (!myPeerConnection.current) {
+        myPeerConnection.current = makeConnection(
+          socket,
+          roomName,
+          handleAddStream
         );
-        return;
       }
-      myPeerConnection.current = connection;
-      console.log('Connection returned from makeConnection:', connection);
-      setTimeout(() => {
-        console.log('myPeerConnection after state update:', connection);
-      }, 0);
+      console.log('PeerConnection initialized:', myPeerConnection.current);
 
       socket.emit('join_room', roomName, email, 'voice');
     } catch (error) {
@@ -108,18 +102,13 @@ const CallScreen = () => {
 
   const handleRoomNotFound = () => {
     alert('Room not found!');
+    navigate('/call/home');
   };
 
   const handleWelcomeSelf = async () => {
     console.log('Myself joined the room:', roomName);
-    if (
-      !myPeerConnection.current ||
-      !(myPeerConnection.current instanceof RTCPeerConnection)
-    ) {
-      console.error(
-        'Invalid myPeerConnection in handleWelcomeSelf:',
-        myPeerConnection.current
-      );
+    if (!myPeerConnection.current) {
+      console.error('PeerConnection is not initialized in handleWelcomeSelf.');
       return;
     }
 
@@ -142,9 +131,8 @@ const CallScreen = () => {
 
   const handleWelcome = () => {
     console.log('Peer joined the room:', roomName);
-    if (myPeerConnection) {
-      const myDataChannel = myPeerConnection.createDataChannel('chat');
-      console.log('DataChannel created:', myDataChannel);
+    if (myPeerConnection.current) {
+      const myDataChannel = myPeerConnection.current.createDataChannel('chat');
       myDataChannel.onmessage = event =>
         console.log('Received message:', event.data);
     }
@@ -157,26 +145,50 @@ const CallScreen = () => {
 
   const handleOffer = async offer => {
     console.log('Offer received:', offer);
-    if (myPeerConnection) {
-      await myPeerConnection.setRemoteDescription(offer);
-      const answer = await myPeerConnection.createAnswer();
-      await myPeerConnection.setLocalDescription(answer);
-      console.log('Answer created and sent:', answer);
+
+    if (!myPeerConnection.current) {
+      myPeerConnection.current = makeConnection(
+        socket,
+        roomName,
+        handleAddStream
+      );
+    }
+
+    try {
+      await myPeerConnection.current.setRemoteDescription(offer);
+      const answer = await myPeerConnection.current.createAnswer();
+      await myPeerConnection.current.setLocalDescription(answer);
+      console.log('Answer created and set as local description:', answer);
       socket.emit('answer', answer, roomName);
+    } catch (error) {
+      console.error('Error handling offer:', error);
     }
   };
 
   const handleAnswer = async answer => {
     console.log('Answer received:', answer);
-    if (myPeerConnection) {
-      await myPeerConnection.setRemoteDescription(answer);
+    if (!myPeerConnection.current) {
+      console.error('PeerConnection is not initialized in handleAnswer.');
+      return;
+    }
+    try {
+      await myPeerConnection.current.setRemoteDescription(answer);
+    } catch (error) {
+      console.error('Error setting remote description:', error);
     }
   };
 
   const handleIce = async ice => {
     console.log('ICE candidate received:', ice);
-    if (myPeerConnection) {
-      await myPeerConnection.addIceCandidate(ice);
+    if (!myPeerConnection.current) {
+      console.error('PeerConnection is not initialized in handleIce.');
+      return;
+    }
+
+    try {
+      await myPeerConnection.current.addIceCandidate(ice);
+    } catch (error) {
+      console.error('Error adding ICE candidate:', error);
     }
   };
 
@@ -230,7 +242,6 @@ const CallScreen = () => {
       console.warn('myPeerConnection.current is already null or undefined.');
     }
 
-    // CallHome으로 이동
     navigate('/call/home');
   };
 

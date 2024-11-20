@@ -1,0 +1,58 @@
+#chatBox {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+#logList {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.my_message {
+  text-align: right;
+  margin: 5px 0;
+}
+
+.peer_message {
+  text-align: left;
+  margin: 5px 0;
+}
+
+.message-bubble {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 15px;
+  max-width: 70%;
+  font-size: 14px;
+}
+
+.my_message .message-bubble {
+  background-color: #d1e7ff; /* 자신이 보낸 메시지 */
+  color: #333;
+  border-bottom-right-radius: 0;
+}
+
+.peer_message .message-bubble {
+  background-color: #f1f1f1; /* 상대방이 보낸 메시지 */
+  color: #333;
+  border-bottom-left-radius: 0;
+}
+
+#recommendations button {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  display: inline-block;
+  position: relative;
+  margin: 5px 0;
+}

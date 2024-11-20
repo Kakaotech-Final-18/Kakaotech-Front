@@ -13,6 +13,7 @@ const CallScreen = () => {
 
   const myStream = useRef(null);
   const myPeerConnection = useRef(null);
+  const myDataChannel = useRef(null);
 
   const { roomName } = useParams();
   const socket = useSocket();
@@ -20,9 +21,9 @@ const CallScreen = () => {
   const [email, setEmail] = useState(
     location.state?.email || 'callee@parrotalk.com'
   );
-  // 'voice' or 'chat'
   const [screenType, setScreenType] = useState(null);
   const [isSelectionLocked, setSelectionLocked] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
 
   useEffect(() => {
     console.log('Extracted email:', email);
@@ -99,9 +100,17 @@ const CallScreen = () => {
       }
       console.log('PeerConnection initialized:', myPeerConnection.current);
 
-      socket.emit('join_room', roomName, email, 'voice');
+      if (screenType === 'chat') {
+        // With Chat 모드에서 DataChannel 생성
+        myDataChannel.current =
+          myPeerConnection.current.createDataChannel('chat');
+        myDataChannel.current.onmessage = handleReceiveMessage;
+        console.log('DataChannel created for chat');
+      }
+
+      socket.emit('join_room', roomName, email, screenType);
     } catch (error) {
-      console.error('Error joining room:', error);
+      console.error('Error during call setup:', error);
     }
   };
 
@@ -136,10 +145,30 @@ const CallScreen = () => {
 
   const handleWelcome = () => {
     console.log('Peer joined the room:', roomName);
-    if (myPeerConnection.current) {
-      const myDataChannel = myPeerConnection.current.createDataChannel('chat');
-      myDataChannel.onmessage = event =>
-        console.log('Received message:', event.data);
+    myPeerConnection.current.ondatachannel = event => {
+      myDataChannel.current = event.channel;
+      myDataChannel.current.onmessage = handleReceiveMessage;
+      console.log('DataChannel received from peer');
+    };
+  };
+
+  const handleReceiveMessage = event => {
+    console.log('Message received:', event.data);
+    setChatMessages(prev => [
+      ...prev,
+      { type: 'peer_message', content: event.data },
+    ]);
+  };
+
+  const handleSendMessage = message => {
+    if (myDataChannel.current && myDataChannel.current.readyState === 'open') {
+      myDataChannel.current.send(message);
+      setChatMessages(prev => [
+        ...prev,
+        { type: 'my_message', content: message },
+      ]);
+    } else {
+      console.warn('DataChannel is not open');
     }
   };
 
@@ -291,7 +320,10 @@ const CallScreen = () => {
         <>
           {screenType === 'chat' && (
             <div id="chatBox">
-              <ChatBox />
+              <ChatBox
+                messages={chatMessages}
+                onSendMessage={handleSendMessage}
+              />
             </div>
           )}
           <video

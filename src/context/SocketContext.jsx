@@ -7,19 +7,20 @@ const SocketContext = createContext(null);
 // Context Provider
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
-  const [isInitialized, setIsInitialized] = useState(false); // 초기화 상태
 
   useEffect(() => {
-    const newSocket = initializeSocket();
-    setSocket(newSocket);
-    setIsInitialized(true); // 초기화 완료
+    const initialize = async () => {
+      const newSocket = await initializeSocket();
+      setSocket(newSocket);
+    };
+
+    initialize();
 
     return () => {};
   }, []);
 
-  if (!isInitialized) {
-    // 초기화가 완료되지 않은 경우 로딩 화면 표시
-    return <div>Loading...</div>;
+  if (!socket) {
+    return null; // 초기화되지 않은 상태에서 아무것도 렌더링하지 않음
   }
 
   return (
@@ -27,7 +28,6 @@ export const SocketProvider = ({ children }) => {
   );
 };
 
-// Context 사용을 위한 Hook
 export const useSocket = () => {
   const context = useContext(SocketContext);
   if (!context) {

@@ -21,7 +21,13 @@ app.get('*', (req, res) => {
 });
 
 const httpServer = http.createServer(app);
-const io = new Server(httpServer);
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.VITE_SOCKET_URL || 'http://localhost:3000', // Vite 개발 서버 주소
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
 
 const rooms = {}; // 방 정보를 저장
 

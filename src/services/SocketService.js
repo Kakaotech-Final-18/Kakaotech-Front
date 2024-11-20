@@ -10,25 +10,29 @@ export const initializeSocket = () => {
   if (!socket) {
     const serverUrl = import.meta.env.VITE_SOCKET_URL || window.location.origin;
     // 소켓 초기화
-    socket = io(serverUrl, {
-      transports: ['websocket'],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    });
-
-    // 연결 확인
-    socket.on('connect', () => {
-      console.log('Socket connected:', socket.id);
-      console.log('Connected to Socket.IO server:', serverUrl);
-    });
+    // socket = io(serverUrl, {
+    //   transports: ['websocket'],
+    //   reconnection: true,
+    //   reconnectionAttempts: 5,
+    //   reconnectionDelay: 1000,
+    // });
+    socket = io();
 
     // 연결 끊김 확인
     socket.on('disconnect', reason => {
       console.warn('Socket disconnected:', reason);
     });
+
+    // 연결 확인
+    return new Promise(resolve => {
+      socket.on('connect', () => {
+        console.log('Socket connected:', socket.id);
+        console.log('Connected to Socket.IO server:', serverUrl);
+        resolve(socket);
+      });
+    });
   }
-  return socket;
+  return Promise.resolve(socket);
 };
 
 /**

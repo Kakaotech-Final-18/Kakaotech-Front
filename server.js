@@ -102,8 +102,6 @@ wsServer.on('connection', socket => {
     const audioStream = roomManager.getAudioStream(roomName);
     if (audioStream) {
       audioStream.write(chunk);
-    } else {
-      console.error('[Server] No active stream for room:', roomName);
     }
   };
 

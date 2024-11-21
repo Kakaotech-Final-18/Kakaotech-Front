@@ -130,19 +130,33 @@ class AwsTranscribeService {
     };
   }
 
-  stopTranscribe(roomName) {
-    if (this.roomManager.getAudioStream(roomName)) {
-      console.log(`[Transcribe] Manual stop request for room: ${roomName}`);
+  async stopTranscribe(roomName) {
+    const audioStream = this.roomManager.getAudioStream(roomName);
+    const controller = this.roomManager.getAbortController(roomName);
 
-      const stream = this.roomManager.getAudioStream(roomName);
-      if (stream && !stream.destroyed) {
-        stream.end(() => {
-          console.log(`[Transcribe] Audio stream ended for room: ${roomName}`);
+    if (!audioStream || !controller) {
+      console.error(
+        `[Transcribe] No active stream or controller for room: ${roomName}`
+      );
+      return;
+    }
+
+    try {
+      console.log(`[Transcribe] Stopping session for room: ${roomName}`);
+      controller.abort(); // Abort Transcribe 세션
+      audioStream.end(); // PassThrough 스트림 종료
+
+      // 추가 확인: AWS SDK의 스트림 종료를 비동기적으로 대기
+      await new Promise(resolve => {
+        audioStream.on('close', () => {
+          console.log(`[Transcribe] Stream fully closed for room: ${roomName}`);
+          resolve();
         });
-      }
+      });
 
-      this.roomManager.deactivateSession(roomName);
-      this.roomManager.removeRoom(roomName);
+      console.log(`[Transcribe] Stream ended for room: ${roomName}`);
+    } catch (error) {
+      console.error(`[Transcribe] Error during stopping session: ${error}`);
     }
   }
 }

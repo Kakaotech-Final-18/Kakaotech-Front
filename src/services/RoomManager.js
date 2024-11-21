@@ -27,21 +27,52 @@ class RoomManager {
     return this.roomAudioStreams[roomName];
   }
 
-  async removeRoom(roomName) {
-    if (this.roomAudioStreams[roomName]) {
-      await new Promise(resolve => {
-        this.roomAudioStreams[roomName].end(() => {
-          console.log(`[RoomManager] Stream ended for room: ${roomName}`);
-          resolve();
-        });
-      });
-      this.roomAudioStreams[roomName].destroy();
+  reset() {
+    Object.keys(this.roomAudioStreams).forEach(roomName => {
+      this.roomAudioStreams[roomName]?.end();
+      this.roomAudioStreams[roomName]?.destroy();
       delete this.roomAudioStreams[roomName];
+    });
+
+    Object.keys(this.abortControllers).forEach(roomName => {
+      this.abortControllers[roomName]?.abort();
+      delete this.abortControllers[roomName];
+    });
+
+    this.activeSessions = {};
+    console.log(
+      '[RoomManager] Reset completed. All streams and controllers cleared.'
+    );
+  }
+
+  removeRoom(roomName) {
+    if (this.roomAudioStreams[roomName]) {
+      try {
+        if (!this.roomAudioStreams[roomName].destroyed) {
+          this.roomAudioStreams[roomName].end();
+          console.log(`[RoomManager] Stream ended for room: ${roomName}`);
+          this.roomAudioStreams[roomName].destroy();
+        }
+        delete this.roomAudioStreams[roomName];
+      } catch (error) {
+        console.error(
+          `[RoomManager] Error ending stream for room: ${roomName}`,
+          error
+        );
+      }
     }
 
     if (this.abortControllers[roomName]) {
-      this.abortControllers[roomName].abort();
-      delete this.abortControllers[roomName];
+      try {
+        this.abortControllers[roomName].abort();
+        console.log(`[RoomManager] Controller aborted for room: ${roomName}`);
+        delete this.abortControllers[roomName];
+      } catch (error) {
+        console.error(
+          `[RoomManager] Error aborting controller for room: ${roomName}`,
+          error
+        );
+      }
     }
 
     delete this.activeSessions[roomName];

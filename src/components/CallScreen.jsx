@@ -30,11 +30,11 @@ const CallScreen = () => {
 
     const initialize = async () => {
       if (socket && socket.connected) {
-        registerSocketEvents();
+        registerSocketEvents(socket);
       } else {
         socket.on('connect', () => {
           console.log('Socket connected:', socket.id);
-          registerSocketEvents();
+          registerSocketEvents(socket);
         });
       }
     };
@@ -44,7 +44,8 @@ const CallScreen = () => {
     return () => {};
   }, []);
 
-  const cleanupSocketEvents = () => {
+  const cleanupSocketEvents = socket => {
+    socket.off('disconnect', () => handleDisconnect(socket));
     socket.off('welcome_self');
     socket.off('welcome');
     socket.off('notification_hi');
@@ -55,10 +56,12 @@ const CallScreen = () => {
     socket.off('peer_left');
     socket.off('room_full');
     socket.off('transcript', handleTranscript);
+    socket.off('stop_audio_chunk', handleStopAudioChunk);
   };
 
-  const registerSocketEvents = () => {
-    cleanupSocketEvents();
+  const registerSocketEvents = socket => {
+    cleanupSocketEvents(socket);
+    socket.on('disconnect', () => handleDisconnect(socket));
     socket.on('welcome_self', handleWelcomeSelf);
     socket.on('welcome', handleWelcome);
     socket.on('notification_hi', handleNotificationHi);
@@ -69,6 +72,7 @@ const CallScreen = () => {
     socket.on('peer_left', handlePeerLeft);
     socket.on('room_full', handleRoomFull);
     socket.on('transcript', handleTranscript);
+    socket.on('stop_audio_chunk', handleStopAudioChunk);
     console.log('Socket events registered.');
   };
 
@@ -252,13 +256,72 @@ const CallScreen = () => {
     }
   };
 
-  const handleLeaveRoom = () => {
+  const handleStopAudioChunk = roomName => {
+    console.log(`Stop audio chunk transmission for room: ${roomName}`);
+
+    // AudioWorkletNode 연결 해제 및 종료
+    if (audioProcessorNode.current) {
+      try {
+        audioProcessorNode.current.port.close();
+        audioProcessorNode.current.disconnect();
+        console.log('AudioProcessorNode disconnected and closed.');
+      } catch (error) {
+        console.error('Error closing AudioProcessorNode:', error);
+      }
+      audioProcessorNode.current = null;
+    }
+
+    // AudioContext 종료
+    if (audioContext.current) {
+      try {
+        audioContext.current.close();
+        console.log('AudioContext closed.');
+      } catch (error) {
+        console.error('Error closing AudioContext:', error);
+      }
+      audioContext.current = null;
+    }
+  };
+
+  const handleDisconnect = socket => {
+    console.log(`User disconnected: ${socket.id}`);
+
+    // 각 방에서 해당 소켓 ID 제거
+    for (const roomName in rooms) {
+      const userIndex = rooms[roomName]?.findIndex(
+        user => user.id === socket.id
+      );
+      if (userIndex !== -1) {
+        const userEmail = rooms[roomName][userIndex].email;
+        rooms[roomName].splice(userIndex, 1);
+        console.log(`[Room] ${userEmail} removed from room: ${roomName}`);
+
+        // 방에 남은 유저가 없으면 방 정리
+        const userCount =
+          wsServer.sockets.adapter.rooms.get(roomName)?.size || 0;
+        if (userCount === 0) {
+          console.log(`[Room] Last user left. Cleaning up room: ${roomName}`);
+          transcribeService.stopTranscribe(roomName); // AWS Transcribe 및 스트림 종료
+          roomManager.removeRoom(roomName);
+          delete rooms[roomName];
+        } else {
+          socket.to(roomName).emit('peer_left', userEmail);
+          console.log(`${userEmail} has left the room: ${roomName}`);
+        }
+        break; // 한 방만 찾으면 루프 종료
+      }
+    }
+  };
+
+  const handleLeaveRoom = async () => {
     console.log(`${email} leaves room : ${roomName}`);
 
-    // [수정된 부분] Transcribe 종료 요청을 먼저 호출
     if (socket && screenType === 'chat') {
       console.log('Ending Transcribe session for room:', roomName);
-      socket.emit('stop_transcribe', roomName); // 서버에서 Transcribe 종료
+      await new Promise(resolve => {
+        socket.emit('stop_transcribe', roomName, resolve); // 서버에서 종료 후 확인
+      });
+      console.log('Transcribe session ended.');
     }
 
     // WebRTC 연결 종료

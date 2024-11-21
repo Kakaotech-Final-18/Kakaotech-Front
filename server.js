@@ -45,6 +45,11 @@ const wsServer = new Server(httpServer, {
 const rooms = {}; // 방 정보를 저장
 
 wsServer.on('connection', socket => {
+  // 서버 시작 시 기존 연결된 클라이언트를 무효화
+  if (socket.connected) {
+    console.log('[Server] Disconnecting existing client:', socket.id);
+    socket.disconnect(true); // 강제 종료
+  }
   console.log('New user connected:', socket.id);
 
   // 방 생성 이벤트 처리
@@ -97,11 +102,35 @@ wsServer.on('connection', socket => {
     }
   });
 
-  // 리스너를 변수로 할당해, 동일 참조를 사용해 제거할 수 있도록 수정
   const handleAudioChunk = (chunk, roomName) => {
     const audioStream = roomManager.getAudioStream(roomName);
-    if (audioStream) {
+
+    if (!audioStream || audioStream.destroyed) {
+      console.warn(
+        `[Audio] Attempted to write to a closed stream for room: ${roomName}`
+      );
+      const clients = wsServer.sockets.adapter.rooms.get(roomName) || [];
+      clients.forEach(clientId => {
+        const clientSocket = wsServer.sockets.sockets.get(clientId);
+        if (clientSocket) {
+          console.log(
+            `[Server] Disconnecting client due to closed stream: ${clientId}`
+          );
+          clientSocket.disconnect(true);
+        }
+      });
+      return;
+    }
+
+    try {
       audioStream.write(chunk);
+      console.log('[Audio] Audio chunk written to stream for room:', roomName);
+    } catch (error) {
+      console.error(
+        `[Audio] Error writing audio chunk for room ${roomName}:`,
+        error
+      );
+      return;
     }
   };
 
@@ -124,7 +153,7 @@ wsServer.on('connection', socket => {
   });
 
   // 방 퇴장 로직
-  socket.on('leave_room', roomName => {
+  socket.on('leave_room', async roomName => {
     console.log(`User ${socket.id} is leaving room: ${roomName}`);
 
     socket.off('audio_chunk', handleAudioChunk);
@@ -134,7 +163,7 @@ wsServer.on('connection', socket => {
     if (userIndex !== -1) {
       const userEmail = rooms[roomName][userIndex].email;
       rooms[roomName].splice(userIndex, 1);
-      socket.to(roomName).emit('peer_left', userEmail);
+      socket.to(roomName).emit('peer_left', userEmail); // 다른 사용자가 나감을 알림
       console.log(`${userEmail} has left the room: ${roomName}`);
     }
 
@@ -143,17 +172,27 @@ wsServer.on('connection', socket => {
     const userCount = wsServer.sockets.adapter.rooms.get(roomName)?.size || 0;
     if (userCount === 0) {
       console.log(`[Room] Last user left. Cleaning up room: ${roomName}`);
-      transcribeService.stopTranscribe(roomName); // AWS Transcribe 및 스트림 종료
+      try {
+        await transcribeService.stopTranscribe(roomName); // AWS Transcribe 및 스트림 종료
+      } catch (error) {
+        console.error(`[Transcribe] Error during stop: ${error}`);
+      }
       roomManager.removeRoom(roomName);
       delete rooms[roomName];
     }
   });
 
-  socket.on('stop_transcribe', roomName => {
+  socket.on('stop_transcribe', async roomName => {
     const audioStream = roomManager.getAudioStream(roomName);
     if (audioStream) {
       console.log(`[Transcribe] Manual stop request for room: ${roomName}`);
-      transcribeService.stopTranscribe(roomName); // Transcribe 세션 종료
+      try {
+        await transcribeService.stopTranscribe(roomName); // Transcribe 세션 종료
+        roomManager.removeRoom(roomName); // RoomManager에서 스트림 및 컨트롤러 정리
+        console.log(`[Transcribe] Audio stream ended for room: ${roomName}`);
+      } catch (error) {
+        console.error(`[Transcribe] Error during manual stop: ${error}`);
+      }
     } else {
       console.error(
         `[Transcribe] No active stream found for room: ${roomName}`

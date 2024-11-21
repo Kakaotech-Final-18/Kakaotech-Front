@@ -27,39 +27,11 @@ class RoomManager {
     return this.roomAudioStreams[roomName];
   }
 
-  reset() {
-    Object.keys(this.roomAudioStreams).forEach(roomName => {
-      this.roomAudioStreams[roomName]?.end();
-      this.roomAudioStreams[roomName]?.destroy();
-      delete this.roomAudioStreams[roomName];
-    });
-
-    Object.keys(this.abortControllers).forEach(roomName => {
-      this.abortControllers[roomName]?.abort();
-      delete this.abortControllers[roomName];
-    });
-
-    this.activeSessions = {};
-    console.log(
-      '[RoomManager] Reset completed. All streams and controllers cleared.'
-    );
-  }
-
   removeRoom(roomName) {
     if (this.roomAudioStreams[roomName]) {
-      try {
-        if (!this.roomAudioStreams[roomName].destroyed) {
-          this.roomAudioStreams[roomName].end();
-          console.log(`[RoomManager] Stream ended for room: ${roomName}`);
-          this.roomAudioStreams[roomName].destroy();
-        }
-        delete this.roomAudioStreams[roomName];
-      } catch (error) {
-        console.error(
-          `[RoomManager] Error ending stream for room: ${roomName}`,
-          error
-        );
-      }
+      this.roomAudioStreams[roomName].end();
+      this.roomAudioStreams[roomName].destroy();
+      delete this.roomAudioStreams[roomName];
     }
 
     if (this.abortControllers[roomName]) {

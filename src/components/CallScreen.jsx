@@ -54,6 +54,7 @@ const CallScreen = () => {
     socket.off('room_not_found');
     socket.off('peer_left');
     socket.off('room_full');
+    socket.off('transcript', handleTranscript);
   };
 
   const registerSocketEvents = () => {
@@ -67,6 +68,7 @@ const CallScreen = () => {
     socket.on('room_not_found', handleRoomNotFound);
     socket.on('peer_left', handlePeerLeft);
     socket.on('room_full', handleRoomFull);
+    socket.on('transcript', handleTranscript);
     console.log('Socket events registered.');
   };
 
@@ -229,29 +231,42 @@ const CallScreen = () => {
   const handleAddStream = async stream => {
     console.log('Stream added:', stream);
 
+    if (!stream || !stream.getAudioTracks().length) {
+      console.error('Invalid stream or no audio tracks available:', stream);
+      return;
+    }
+
     if (peerVideoRef.current) {
       peerVideoRef.current.srcObject = stream;
     }
 
-    const audioContext = new AudioContext();
+    try {
+      const audioContext = new AudioContext();
+      console.log('AudioContext created:', audioContext);
 
-    await audioContext.audioWorklet.addModule('/audio-processor.js');
-    console.log('Audio Worklet Module loaded');
+      await audioContext.audioWorklet.addModule('./audio-processor.js');
+      console.log('Audio Worklet Module loaded');
 
-    const source = audioContext.createMediaStreamSource(stream);
-    const processor = new AudioWorkletNode(audioContext, 'audio-processor');
+      const source = audioContext.createMediaStreamSource(stream);
+      console.log('MediaStreamSource created:', source);
 
-    processor.port.onmessage = event => {
-      const audioChunk = event.data;
-      console.log('Audio chunk received:', audioChunk);
+      const processor = new AudioWorkletNode(audioContext, 'audio-processor');
+      console.log('AudioProcessor node created:', processor);
 
-      if (screenType === 'chat') {
-        socket.emit('audio_chunk', audioChunk, roomName);
-      }
-    };
+      processor.port.onmessage = event => {
+        const audioChunk = event.data;
+        console.log('Audio chunk received:', audioChunk);
 
-    source.connect(processor);
-    console.log('AudioProcessor connected to MediaStreamSource');
+        if (screenType === 'chat') {
+          socket.emit('audio_chunk', audioChunk, roomName);
+        }
+      };
+
+      source.connect(processor);
+      console.log('AudioProcessor connected to MediaStreamSource');
+    } catch (error) {
+      console.error('Error during AudioProcessor setup:', error);
+    }
   };
 
   const handleLeaveRoom = () => {
@@ -267,8 +282,6 @@ const CallScreen = () => {
       } catch (error) {
         console.error('Error closing PeerConnection:', error);
       }
-    } else {
-      console.warn('myPeerConnection.current is already null or undefined.');
     }
 
     // 스트림 정리
@@ -282,11 +295,6 @@ const CallScreen = () => {
       }
       myStream.current = null;
       console.log('Media stream stopped and cleared.');
-    } else {
-      console.warn(
-        'myStream.current is not a valid MediaStream or already cleared:',
-        myStream.current
-      );
     }
 
     // 소켓에서 방 떠나는 이벤트 전송
@@ -294,13 +302,11 @@ const CallScreen = () => {
       console.log('Sending leave_room event to server.');
       socket.emit('leave_room', roomName);
 
-      // Transcribe 종료
+      // Transcribe 종료 요청
       if (screenType === 'chat') {
         console.log('Ending Transcribe session for room:', roomName);
         socket.emit('stop_transcribe', roomName); // 서버에서 Transcribe 종료
       }
-    } else {
-      console.warn('Socket is not initialized.');
     }
 
     navigate('/call/home');
@@ -314,6 +320,15 @@ const CallScreen = () => {
     alert(`${peerEmail} has left the room.`);
     alert('press ok to end call.');
     handleLeaveRoom();
+  };
+
+  // ChatBox에 Transcribe 결과를 표시하는 핸들러
+  const handleTranscript = transcript => {
+    console.log('Received transcript:', transcript);
+    setChatMessages(prev => [
+      ...prev,
+      { type: 'peer_message', content: transcript },
+    ]);
   };
 
   return (

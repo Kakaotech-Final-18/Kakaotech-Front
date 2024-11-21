@@ -6,6 +6,7 @@ let myStream;
 export const getMedia = async () => {
   const constraints = {
     audio: {
+      sampleRate: 48000,
       echoCancellation: true,
       noiseSuppression: true,
       autoGainControl: true,

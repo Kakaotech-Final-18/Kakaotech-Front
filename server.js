@@ -124,13 +124,8 @@ wsServer.on('connection', socket => {
 
     try {
       audioStream.write(chunk);
-      console.log('[Audio] Audio chunk written to stream for room:', roomName);
-    } catch (error) {
-      console.error(
-        `[Audio] Error writing audio chunk for room ${roomName}:`,
-        error
-      );
-      return;
+    } else {
+      console.error('[Server] No active stream for room:', roomName);
     }
   };
 

@@ -229,41 +229,24 @@ const CallScreen = () => {
   };
 
   const handleAddStream = async stream => {
-    console.log('Stream added:', stream);
-
-    if (!stream || !stream.getAudioTracks().length) {
-      console.error('Invalid stream or no audio tracks available:', stream);
-      return;
-    }
-
-    if (peerVideoRef.current) {
-      peerVideoRef.current.srcObject = stream;
-    }
+    peerVideoRef.current.srcObject = stream;
+    console.log('peer video Stream added:', stream);
 
     try {
       const audioContext = new AudioContext();
-      console.log('AudioContext created:', audioContext);
-
-      await audioContext.audioWorklet.addModule('./audio-processor.js');
-      console.log('Audio Worklet Module loaded');
+      await audioContext.audioWorklet.addModule('/js/audio-processor.js');
 
       const source = audioContext.createMediaStreamSource(stream);
-      console.log('MediaStreamSource created:', source);
-
       const processor = new AudioWorkletNode(audioContext, 'audio-processor');
-      console.log('AudioProcessor node created:', processor);
 
       processor.port.onmessage = event => {
         const audioChunk = event.data;
-        console.log('Audio chunk received:', audioChunk);
-
         if (screenType === 'chat') {
           socket.emit('audio_chunk', audioChunk, roomName);
         }
       };
 
       source.connect(processor);
-      console.log('AudioProcessor connected to MediaStreamSource');
     } catch (error) {
       console.error('Error during AudioProcessor setup:', error);
     }

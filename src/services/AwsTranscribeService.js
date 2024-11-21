@@ -35,7 +35,7 @@ class AwsTranscribeService {
     const params = {
       LanguageCode: 'ko-KR',
       MediaEncoding: 'pcm',
-      MediaSampleRateHertz: 48000,
+      MediaSampleRateHertz,
       AudioStream: this.createAsyncIterator(audioStream),
     };
 
@@ -47,6 +47,7 @@ class AwsTranscribeService {
       });
 
       for await (const event of response.TranscriptResultStream) {
+        console.log('[Transcribe] Transcript Event:', event);
         const results = event.TranscriptEvent?.Transcript?.Results || [];
         results.forEach(result => {
           if (!result.IsPartial) {
@@ -93,9 +94,30 @@ class AwsTranscribeService {
       : this.convertToAsyncIterable(stream);
 
     return (async function* () {
+      let lastDataTime = Date.now();
+      const emptyChunk = Buffer.alloc(targetChunkSize); // 4KB의 빈 오디오 청크
+
       for await (const chunk of reader) {
+        console.log('[createAsyncIterator] Chunk size received:', chunk.length);
+        lastDataTime = Date.now(); // 마지막 데이터 수신 시간 갱신
+
+        // 오디오 데이터를 일정 간격으로 전송
         yield { AudioEvent: { AudioChunk: chunk } };
+
+        // 빈 청크 전송을 일정 간격으로 보장
+        while (Date.now() - lastDataTime >= emptyChunkInterval) {
+          console.log('[Transcribe] Sending empty audio chunk at:', new Date());
+          yield { AudioEvent: { AudioChunk: emptyChunk } };
+          lastDataTime = Date.now();
+        }
+
+        // 오디오 데이터 전송 후 적절한 딜레이 적용
+        await new Promise(resolve => setTimeout(resolve, chunkInterval)); // 오디오 전송 간격 설정
       }
+
+      // 스트림 종료 시 마지막 빈 청크 전송
+      console.log('[Transcribe] Stream ended, sending final empty audio chunk');
+      yield { AudioEvent: { AudioChunk: emptyChunk } };
     })();
   }
 

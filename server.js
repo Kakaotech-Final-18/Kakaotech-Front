@@ -99,12 +99,18 @@ wsServer.on('connection', socket => {
 
   // 리스너를 변수로 할당해, 동일 참조를 사용해 제거할 수 있도록 수정
   const handleAudioChunk = (chunk, roomName) => {
+    console.log(
+      '[Server] Received audio chunk size:',
+      chunk.length,
+      'for room:',
+      roomName
+    );
     const audioStream = roomManager.getAudioStream(roomName);
     if (audioStream) {
-      console.log(`[AudioChunk] Writing chunk to stream for room: ${roomName}`);
       audioStream.write(chunk);
+      console.log('[Server] Audio chunk written to stream for room:', roomName);
     } else {
-      console.error(`[AudioChunk] No audio stream found for room: ${roomName}`);
+      console.error('[Server] No active stream for room:', roomName);
     }
   };
 
@@ -153,9 +159,14 @@ wsServer.on('connection', socket => {
   });
 
   socket.on('stop_transcribe', roomName => {
-    if (roomManager.roomAudioStreams[roomName]) {
+    const audioStream = roomManager.getAudioStream(roomName);
+    if (audioStream) {
       console.log(`[Transcribe] Manual stop request for room: ${roomName}`);
       transcribeService.stopTranscribe(roomName); // Transcribe 세션 종료
+    } else {
+      console.error(
+        `[Transcribe] No active stream found for room: ${roomName}`
+      );
     }
   });
 

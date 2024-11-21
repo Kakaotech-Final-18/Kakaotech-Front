@@ -45,11 +45,6 @@ const wsServer = new Server(httpServer, {
 const rooms = {}; // 방 정보를 저장
 
 wsServer.on('connection', socket => {
-  // 서버 시작 시 기존 연결된 클라이언트를 무효화
-  if (socket.connected) {
-    console.log('[Server] Disconnecting existing client:', socket.id);
-    socket.disconnect(true); // 강제 종료
-  }
   console.log('New user connected:', socket.id);
 
   // 방 생성 이벤트 처리
@@ -109,22 +104,12 @@ wsServer.on('connection', socket => {
       console.warn(
         `[Audio] Attempted to write to a closed stream for room: ${roomName}`
       );
-      const clients = wsServer.sockets.adapter.rooms.get(roomName) || [];
-      clients.forEach(clientId => {
-        const clientSocket = wsServer.sockets.sockets.get(clientId);
-        if (clientSocket) {
-          console.log(
-            `[Server] Disconnecting client due to closed stream: ${clientId}`
-          );
-          clientSocket.disconnect(true);
-        }
-      });
       return;
     }
 
     try {
       audioStream.write(chunk);
-    } else {
+    } catch {
       console.error('[Server] No active stream for room:', roomName);
     }
   };

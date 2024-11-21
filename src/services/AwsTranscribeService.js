@@ -131,8 +131,19 @@ class AwsTranscribeService {
   }
 
   stopTranscribe(roomName) {
-    this.roomManager.deactivateSession(roomName); // 세션 비활성화
-    this.roomManager.removeRoom(roomName); // 방 제거
+    if (this.roomManager.getAudioStream(roomName)) {
+      console.log(`[Transcribe] Manual stop request for room: ${roomName}`);
+
+      const stream = this.roomManager.getAudioStream(roomName);
+      if (stream && !stream.destroyed) {
+        stream.end(() => {
+          console.log(`[Transcribe] Audio stream ended for room: ${roomName}`);
+        });
+      }
+
+      this.roomManager.deactivateSession(roomName);
+      this.roomManager.removeRoom(roomName);
+    }
   }
 }
 

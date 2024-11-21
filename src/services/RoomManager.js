@@ -27,9 +27,14 @@ class RoomManager {
     return this.roomAudioStreams[roomName];
   }
 
-  removeRoom(roomName) {
+  async removeRoom(roomName) {
     if (this.roomAudioStreams[roomName]) {
-      this.roomAudioStreams[roomName].end();
+      await new Promise(resolve => {
+        this.roomAudioStreams[roomName].end(() => {
+          console.log(`[RoomManager] Stream ended for room: ${roomName}`);
+          resolve();
+        });
+      });
       this.roomAudioStreams[roomName].destroy();
       delete this.roomAudioStreams[roomName];
     }

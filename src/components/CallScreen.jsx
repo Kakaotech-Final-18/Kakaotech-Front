@@ -255,6 +255,12 @@ const CallScreen = () => {
   const handleLeaveRoom = () => {
     console.log(`${email} leaves room : ${roomName}`);
 
+    // [수정된 부분] Transcribe 종료 요청을 먼저 호출
+    if (socket && screenType === 'chat') {
+      console.log('Ending Transcribe session for room:', roomName);
+      socket.emit('stop_transcribe', roomName); // 서버에서 Transcribe 종료
+    }
+
     // WebRTC 연결 종료
     if (myPeerConnection.current) {
       console.log('Closing peer connection...');
@@ -284,12 +290,6 @@ const CallScreen = () => {
     if (socket) {
       console.log('Sending leave_room event to server.');
       socket.emit('leave_room', roomName);
-
-      // Transcribe 종료 요청
-      if (screenType === 'chat') {
-        console.log('Ending Transcribe session for room:', roomName);
-        socket.emit('stop_transcribe', roomName); // 서버에서 Transcribe 종료
-      }
     }
 
     navigate('/call/home');

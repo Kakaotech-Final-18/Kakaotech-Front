@@ -1,3 +1,4 @@
+import { resolve } from 'path';
 import { PassThrough } from 'stream';
 
 class RoomManager {
@@ -27,28 +28,27 @@ class RoomManager {
     return this.roomAudioStreams[roomName];
   }
 
-  removeRoom(roomName) {
+  async removeRoom(roomName) {
     if (this.roomAudioStreams[roomName]) {
-      this.roomAudioStreams[roomName].end();
-      this.roomAudioStreams[roomName].destroy();
-      delete this.roomAudioStreams[roomName];
-    }
+      await new Promise(resolve => {
+        this.roomAudioStreams[roomName].end(() => {
+          console.log(`[RoomManager] Stream ended for room: ${roomName}`);
+          resolve();
+        });
+      });
 
-    if (this.abortControllers[roomName]) {
-      try {
-        this.abortControllers[roomName].abort();
-        console.log(`[RoomManager] Controller aborted for room: ${roomName}`);
-        delete this.abortControllers[roomName];
-      } catch (error) {
-        console.error(
-          `[RoomManager] Error aborting controller for room: ${roomName}`,
-          error
-        );
+      if (this.roomAudioStreams[roomName]) {
+        this.roomAudioStreams[roomName].destroy();
+        delete this.roomAudioStreams[roomName];
       }
     }
 
+    if (this.abortControllers[roomName]) {
+      this.abortControllers[roomName].abort();
+      delete this.abortControllers[roomName];
+    }
+
     delete this.activeSessions[roomName];
-    console.log(`[RoomManager] Room ${roomName} removed.`);
   }
 
   getAudioStream(roomName) {

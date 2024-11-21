@@ -19,7 +19,6 @@ class RoomManager {
   addAudioStream(roomName) {
     if (!this.roomAudioStreams[roomName]) {
       this.roomAudioStreams[roomName] = new PassThrough();
-      console.log(`[RoomManager] Audio stream added for room: ${roomName}`);
     } else {
       console.log(
         `[RoomManager] Audio stream already exists for room: ${roomName}`

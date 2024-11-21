@@ -99,16 +99,9 @@ wsServer.on('connection', socket => {
 
   // 리스너를 변수로 할당해, 동일 참조를 사용해 제거할 수 있도록 수정
   const handleAudioChunk = (chunk, roomName) => {
-    console.log(
-      '[Server] Received audio chunk size:',
-      chunk.length,
-      'for room:',
-      roomName
-    );
     const audioStream = roomManager.getAudioStream(roomName);
     if (audioStream) {
       audioStream.write(chunk);
-      console.log('[Server] Audio chunk written to stream for room:', roomName);
     } else {
       console.error('[Server] No active stream for room:', roomName);
     }

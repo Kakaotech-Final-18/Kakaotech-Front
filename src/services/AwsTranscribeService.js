@@ -58,7 +58,7 @@ class AwsTranscribeService {
             wsServer.to(roomName).emit('transcript', transcript);
 
             axios
-              .post('http://52.79.189.35:8000/recommendations', {
+              .post(process.env.AI_RECOMMENDATIONS, {
                 room_number: roomName,
                 sentence: transcript,
               })

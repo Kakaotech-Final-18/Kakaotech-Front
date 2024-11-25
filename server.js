@@ -168,7 +168,6 @@ wsServer.on('connection', socket => {
       console.log(`[Transcribe] Manual stop request for room: ${roomName}`);
       try {
         await transcribeService.stopTranscribe(roomName); // Transcribe 세션 종료
-        roomManager.removeRoom(roomName); // RoomManager에서 스트림 및 컨트롤러 정리
         console.log(`[Transcribe] Audio stream ended for room: ${roomName}`);
       } catch (error) {
         console.error(`[Transcribe] Error during manual stop: ${error}`);

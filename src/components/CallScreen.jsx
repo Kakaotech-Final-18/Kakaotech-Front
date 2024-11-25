@@ -24,6 +24,8 @@ const CallScreen = () => {
   const [screenType, setScreenType] = useState(null);
   const [isSelectionLocked, setSelectionLocked] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
+  const [recommendations, setRecommendations] = useState([]); // Recommendations 상태 추가
+
 
   useEffect(() => {
     console.log('Extracted email:', email);
@@ -73,7 +75,17 @@ const CallScreen = () => {
     socket.on('room_full', handleRoomFull);
     socket.on('transcript', handleTranscript);
     socket.on('stop_audio_chunk', handleStopAudioChunk);
+    socket.on('recommendations', handleRecommendations); // Recommendations 이벤트 추가
     console.log('Socket events registered.');
+  };
+
+  const handleRecommendations = data => {
+    console.log('Received recommendations:', data);
+    setRecommendations(data); // Recommendations 상태 업데이트
+  };
+
+  const clearRecommendations = () => {
+    setRecommendations([]);
   };
 
   const handleStartCall = async () => {
@@ -257,7 +269,7 @@ const CallScreen = () => {
   };
 
   const handleStopAudioChunk = roomName => {
-    console.log(`Stop audio chunk transmission for room: ${roomName}`);
+    console.log('Stop audio chunk transmission for room: ${roomName}');
 
     // AudioWorkletNode 연결 해제 및 종료
     if (audioProcessorNode.current) {
@@ -284,7 +296,7 @@ const CallScreen = () => {
   };
 
   const handleDisconnect = socket => {
-    console.log(`User disconnected: ${socket.id}`);
+    console.log('User disconnected: ${socket.id}');
 
     // 각 방에서 해당 소켓 ID 제거
     for (const roomName in rooms) {
@@ -294,13 +306,13 @@ const CallScreen = () => {
       if (userIndex !== -1) {
         const userEmail = rooms[roomName][userIndex].email;
         rooms[roomName].splice(userIndex, 1);
-        console.log(`[Room] ${userEmail} removed from room: ${roomName}`);
+        console.log('[Room] ${userEmail} removed from room: ${roomName}');
 
         // 방에 남은 유저가 없으면 방 정리
         const userCount =
           wsServer.sockets.adapter.rooms.get(roomName)?.size || 0;
         if (userCount === 0) {
-          console.log(`[Room] Last user left. Cleaning up room: ${roomName}`);
+          console.log('[Room] Last user left. Cleaning up room: ${roomName}');
           transcribeService.stopTranscribe(roomName); // AWS Transcribe 및 스트림 종료
           roomManager.removeRoom(roomName);
           delete rooms[roomName];
@@ -408,6 +420,8 @@ const CallScreen = () => {
               <ChatBox
                 messages={chatMessages}
                 onSendMessage={handleSendMessage}
+                recommendations={recommendations}
+                clearRecommendations={clearRecommendations}
               />
             </div>
           )}

@@ -56,3 +56,29 @@
   position: relative;
   margin: 5px 0;
 }
+#recommendationsBox {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0;
+}
+  
+.recommendation-button {
+  background-color: #e0f7fa;
+  color: #00695c;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+  
+.recommendation-button:hover {
+  background-color: #b2ebf2;
+}
+  
+.recommendation-button:active {
+  background-color: #80deea;
+  transform: scale(0.95);
+}

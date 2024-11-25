@@ -361,6 +361,7 @@ const CallScreen = () => {
     // 소켓에서 방 떠나는 이벤트 전송
     if (socket) {
       console.log('Sending leave_room event to server.');
+      socket.off('audio_chunk'); // audio_chunk 이벤트 중단
       socket.emit('leave_room', roomName);
     }
 
@@ -374,6 +375,10 @@ const CallScreen = () => {
   const handlePeerLeft = peerEmail => {
     alert(`${peerEmail} has left the room.`);
     alert('press ok to end call.');
+    if (screenType === 'chat') {
+      console.log('Stopping Audio Processor for peer leave...');
+      handleStopAudioChunk(roomName); // Audio Processor 정리
+    }
     handleLeaveRoom();
   };
 

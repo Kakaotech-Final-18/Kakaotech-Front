@@ -23,11 +23,6 @@ class AwsTranscribeService {
     this.roomManager = roomManager;
   }
   async startTranscribe(roomName, wsServer) {
-    if (!this.roomManager.isActive(roomName)) {
-      console.log(`[Transcribe] Room ${roomName} is not active.`);
-      return;
-    }
-
     console.log(`[Transcribe] Starting session for room: ${roomName}`);
 
     const audioStream = this.roomManager.getAudioStream(roomName);
@@ -77,14 +72,23 @@ class AwsTranscribeService {
     } catch (error) {
       if (error.name === 'AbortError') {
         console.log(`[Transcribe] Session aborted for room: ${roomName}`);
+      } else if (error.code === 'ERR_STREAM_PREMATURE_CLOSE') {
+        console.warn(
+          `[Transcribe] Stream closed prematurely for room: ${roomName}`
+        );
       } else {
         console.error(`[Transcribe] Error for room ${roomName}:`, error);
       }
     } finally {
       console.log(`[Transcribe] Ending session for room: ${roomName}`);
-      this.roomManager.deactivateSession(roomName);
       this.roomManager.removeRoom(roomName);
     }
+
+    audioStream.end(() => {
+      console.log(
+        `[Transcribe] Audio stream fully ended for room: ${roomName}`
+      );
+    });
   }
 
   // PassThrough를 async iterable로 변환
@@ -130,19 +134,42 @@ class AwsTranscribeService {
     };
   }
 
-  stopTranscribe(roomName) {
-    if (this.roomManager.getAudioStream(roomName)) {
-      console.log(`[Transcribe] Manual stop request for room: ${roomName}`);
+  async stopTranscribe(roomName) {
+    if (this.roomManager.isStopping(roomName)) {
+      console.log(
+        `[Transcribe] Stop already in progress for room: ${roomName}`
+      );
+      return;
+    }
+    this.roomManager.setStopping(roomName);
 
-      const stream = this.roomManager.getAudioStream(roomName);
-      if (stream && !stream.destroyed) {
-        stream.end(() => {
-          console.log(`[Transcribe] Audio stream ended for room: ${roomName}`);
-        });
+    const abortController = this.roomManager.getAbortController(roomName);
+    const stream = this.roomManager.getAudioStream(roomName);
+
+    if (abortController && stream && !stream.destroyed) {
+      console.log(`[Transcribe] Manual stop request for room: ${roomName}`);
+      this.roomManager.deactivateSession(roomName);
+      try {
+        abortController.abort(); // AWS 작업 중단
+      } catch (error) {
+        console.warn(`[Transcribe] Error aborting: ${error.message}`);
       }
 
-      this.roomManager.deactivateSession(roomName);
-      this.roomManager.removeRoom(roomName);
+      console.log(
+        `[Transcribe] Waiting 250ms to ensure all chunks are processed...`
+      );
+      setTimeout(() => {
+        stream.end(() => {
+          console.log(
+            `[Transcribe] Audio stream fully ended for room: ${roomName}`
+          );
+          this.roomManager.removeRoom(roomName);
+          this.roomManager.clearStopping(roomName);
+        });
+      }, chunkInterval * 2);
+    } else {
+      console.warn(`[Transcribe] No active stream found for room: ${roomName}`);
+      this.roomManager.clearStopping(roomName);
     }
   }
 }

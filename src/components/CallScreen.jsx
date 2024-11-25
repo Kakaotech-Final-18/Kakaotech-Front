@@ -26,7 +26,6 @@ const CallScreen = () => {
   const [chatMessages, setChatMessages] = useState([]);
   const [recommendations, setRecommendations] = useState([]); // Recommendations 상태 추가
 
-
   useEffect(() => {
     console.log('Extracted email:', email);
 
@@ -118,13 +117,10 @@ const CallScreen = () => {
       }
       console.log('PeerConnection initialized:', myPeerConnection.current);
 
-      if (screenType === 'chat') {
-        // With Chat 모드에서 DataChannel 생성
-        myDataChannel.current =
-          myPeerConnection.current.createDataChannel('chat');
-        myDataChannel.current.onmessage = handleReceiveMessage;
-        console.log('DataChannel created for chat');
-      }
+      myDataChannel.current =
+        myPeerConnection.current.createDataChannel('chat');
+      myDataChannel.current.onmessage = handleReceiveMessage;
+      console.log('DataChannel created for chat');
 
       socket.emit('join_room', roomName, email, screenType);
     } catch (error) {

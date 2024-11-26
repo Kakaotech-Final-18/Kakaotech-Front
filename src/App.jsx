@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import CallHome from './components/CallHome';
+import CallHomeScreen from './components/CallHomeScreen';
 import CallScreen from './components/CallScreen';
 import { SocketProvider } from './context/SocketContext';
 
@@ -9,7 +9,7 @@ const App = () => {
     <SocketProvider>
       <Router>
         <Routes>
-          <Route path="/call/home" element={<CallHome />} />
+          <Route path="/call/home" element={<CallHomeScreen />} />
           <Route path="/call/:roomName" element={<CallScreen />} />
         </Routes>
       </Router>

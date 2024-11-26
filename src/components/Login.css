@@ -1,0 +1,7 @@
+.login-container {
+  padding: 16px;
+  background-color: var(--color-container1-background);
+  border: 1px solid var(--color-container1-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}

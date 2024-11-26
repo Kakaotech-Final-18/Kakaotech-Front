@@ -1,42 +1,57 @@
-#root {
-  max-width: 1280px;
+/* App.css */
+
+/* 테마 색상 */
+:root {
+  --color-background-main: #fffdf5;
+  --color-header-background: #98c485;
+  --color-text-main: #000000;
+  --color-text-sub: #808080; /* 회색 */
+
+  --color-title: #a78462;
+
+  /* Container 1 */
+  --color-container1-border: #7a7b2b;
+  --color-container1-background: #fff4d1;
+
+  /* Container 2 */
+  --color-container2-border: #4f9456;
+  --color-container2-background: #b1d3ae;
+
+  /* Common Button */
+  --color-button-border: #4f9456;
+  --color-button-background: #b1d3ae;
+  --color-button-text: #000000;
+
+  --spacing: 16px;
+  --font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+/* 전역 스타일 */
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  background-color: var(--color-background-main);
+  color: var(--color-text-main);
+}
+
+.container {
+  max-width: 480px; /* 모바일 화면 기준 */
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: var(--spacing);
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* 공통 버튼 스타일 */
+button {
+  border-radius: 8px;
+  border: 1px solid var(--color-button-border);
+  background-color: var(--color-button-background);
+  color: var(--color-button-text);
+  padding: 0.8em 1.2em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+button:hover {
+  background-color: rgba(75, 140, 90, 0.8);
 }

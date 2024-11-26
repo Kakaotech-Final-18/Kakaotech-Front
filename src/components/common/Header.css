@@ -1,10 +1,16 @@
 .header {
+  position: fixed;
+  top: env(safe-area-inset-top, 0px); /* Safe Area Top 지원 */
+  left: 0;
+  right: 0;
   height: 56px;
+  background-color: var(--color-header-background);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: var(--color-header-background);
-  padding: 0 var(--spacing);
+  padding: 0 16px;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .header-spacer {

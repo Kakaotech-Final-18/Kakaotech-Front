@@ -1,0 +1,33 @@
+.header {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--color-header-background);
+  padding: 0 var(--spacing);
+}
+
+.header-spacer {
+  width: 48px; /* 버튼 자리에 해당하는 공간 확보 */
+}
+
+.header-logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  flex-grow: 1;
+}
+
+.header-button {
+  border: 1px solid var(--color-button-border);
+  background-color: var(--color-button-background);
+  color: var(--color-button-text);
+  border-radius: 8px;
+  padding: 0.4em 0.8em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.header-button:hover {
+  background-color: rgba(75, 140, 90, 0.8);
+}

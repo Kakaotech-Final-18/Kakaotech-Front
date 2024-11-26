@@ -1,0 +1,16 @@
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.logo-icon {
+  width: clamp(32px, 5vw, 48px); /* 최소 32px, 최대 48px, 뷰포트 폭의 5% */
+  height: clamp(32px, 5vw, 48px); /* 정사각형 유지 */
+}
+
+.logo-text {
+  margin-left: 8px;
+  font-size: clamp(1rem, 2vw, 1.5rem); /* 텍스트 크기도 유동적으로 설정 */
+  font-weight: bold;
+  color: var(--color-text-main);
+}

@@ -7,13 +7,6 @@ import CallScreen from './components/CallScreen';
 import { SocketProvider } from './context/SocketContext';
 
 const App = () => {
-  React.useEffect(() => {
-    if (!window.Kakao.isInitialized()) {
-      window.Kakao.init(process.env.KAKAO_JS_KEY);
-      console.log('Kakao Initialized:', window.Kakao.isInitialized());
-    }
-  }, []);
-
   return (
     <SocketProvider>
       <Router>

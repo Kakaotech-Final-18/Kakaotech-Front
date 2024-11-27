@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { initializeSocket } from '../services/SocketService';
+import ShareButton from './ShareButton';
 import { useSocket } from '../context/SocketContext';
 
 const CallHomeScreen = () => {
@@ -34,7 +34,7 @@ const CallHomeScreen = () => {
 
   return (
     <div>
-      <h1>Create or Join a Room</h1>
+      <h1>앵무말 통화 시작하기</h1>
       <form>
         <input
           type="email"
@@ -44,18 +44,15 @@ const CallHomeScreen = () => {
           required
         />
         <button type="button" onClick={handleCreateRoom}>
-          Create Room
+          통화 방 생성
         </button>
         {roomLink && (
           <div>
-            <p>Share this link to invite others:</p>
-            <p>
-              <a href={roomLink} target="_blank" rel="noopener noreferrer">
-                {roomLink}
-              </a>
-            </p>
+            <p>카카오톡 친구에게 통화방을 공유해 보세요!</p>
+            <p>{roomLink}</p>
+            <ShareButton roomLink={roomLink} />
             <button type="button" onClick={handleJoinRoom}>
-              Join Room
+              방 입장하기
             </button>
           </div>
         )}

@@ -23,7 +23,36 @@
   --color-button-text: #000000;
 
   --spacing: 16px;
-  --font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-family: 'Hakgyoansim Nadeuri', system-ui, Avenir, Helvetica, Arial,
+    sans-serif;
+}
+
+@font-face {
+  font-family: 'Hakgyoansim Nadeuri';
+  src: url('./assets/fonts/Hakgyoansim Nadeuri OTF L.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Hakgyoansim Nadeuri';
+  src: url('./assets/fonts/Hakgyoansim Nadeuri TTF L.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Hakgyoansim Nadeuri';
+  src: url('./assets/fonts/Hakgyoansim Nadeuri OTF B.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Hakgyoansim Nadeuri';
+  src: url('./assets/fonts/Hakgyoansim Nadeuri TTF B.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
 }
 
 /* 전역 스타일 */

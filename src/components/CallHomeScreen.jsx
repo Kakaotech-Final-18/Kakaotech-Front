@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { initializeSocket } from '../services/SocketService';
 import { useSocket } from '../context/SocketContext';
 
-const CallHome = () => {
+const CallHomeScreen = () => {
   const [roomLink, setRoomLink] = useState('');
   const [email, setEmail] = useState('');
   const navigate = useNavigate();
@@ -64,4 +64,4 @@ const CallHome = () => {
   );
 };
 
-export default CallHome;
+export default CallHomeScreen;

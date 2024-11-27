@@ -1,68 +1,86 @@
+/* App.css */
+
+/* 테마 색상 */
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --color-background-main: #fffdf5;
+  --color-header-background: #98c485;
+  --color-text-main: #000000;
+  --color-text-sub: #808080; /* 회색 */
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  --color-title: #a78462;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Container 1 */
+  --color-container1-border: #7a7b2b;
+  --color-container1-background: #fff4d1;
+
+  /* Container 2 */
+  --color-container2-border: #4f9456;
+  --color-container2-background: #b1d3ae;
+
+  /* Common Button */
+  --color-button-border: #4f9456;
+  --color-button-background: #b1d3ae;
+  --color-button-text: #000000;
+
+  --spacing: 16px;
+  --font-family: 'Hakgyoansim Nadeuri', system-ui, Avenir, Helvetica, Arial,
+    sans-serif;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+@font-face {
+  font-family: 'Hakgyoansim Nadeuri';
+  src: url('./assets/fonts/Hakgyoansim Nadeuri OTF L.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
 }
 
+@font-face {
+  font-family: 'Hakgyoansim Nadeuri';
+  src: url('./assets/fonts/Hakgyoansim Nadeuri TTF L.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Hakgyoansim Nadeuri';
+  src: url('./assets/fonts/Hakgyoansim Nadeuri OTF B.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Hakgyoansim Nadeuri';
+  src: url('./assets/fonts/Hakgyoansim Nadeuri TTF B.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+/* 전역 스타일 */
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  font-family: var(--font-family);
+  background-color: var(--color-background-main);
+  color: var(--color-text-main);
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+.container {
+  max-width: 480px; /* 모바일 화면 기준 */
+  margin: 0 auto;
+  padding: var(--spacing);
 }
 
+/* 공통 버튼 스타일 */
 button {
   border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
+  border: 1px solid var(--color-button-border);
+  background-color: var(--color-button-background);
+  color: var(--color-button-text);
+  padding: 0.8em 1.2em;
   font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  transition: background-color 0.3s ease;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+button:hover {
+  background-color: rgba(75, 140, 90, 0.8);
 }

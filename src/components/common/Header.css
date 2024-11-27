@@ -1,0 +1,41 @@
+.header {
+  position: fixed;
+  top: env(safe-area-inset-top, 0px); /* Safe Area Top 지원 */
+  left: 0;
+  right: 0;
+  height: 56px;
+  background-color: var(--color-header-background);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.header-spacer {
+  width: 48px; /* 버튼 자리에 해당하는 공간 확보 */
+}
+
+.header-logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  flex-grow: 1;
+}
+
+.header-button {
+  border: 1px solid var(--color-button-border);
+  background-color: var(--color-button-background);
+  color: var(--color-button-text);
+  border-radius: 8px;
+  padding: 0.4em 0.8em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.header-button:hover {
+  background-color: rgba(75, 140, 90, 0.8);
+}

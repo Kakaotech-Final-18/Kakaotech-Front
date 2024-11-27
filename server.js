@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import AwsTranscribeService from './src/services/AwsTranscribeService.js';
 import RoomManager from './src/services/RoomManager.js';
 import dotenv from 'dotenv';
+import axios from 'axios';
 
 dotenv.config();
 const roomManager = new RoomManager();
@@ -139,9 +140,36 @@ wsServer.on('connection', socket => {
     socket.to(roomName).emit('ice', ice);
   });
 
+  function requestAISummary(roomName, messages) {
+    // 요약 요청
+    console.log("roomName: " + roomName);
+    const combinedContent = messages.map(msg => msg.content).join(' ');
+    console.log("message: " + combinedContent);
+    axios.post(process.env.AI_SUMMARY, {
+        room_number: roomName,
+        sentence: combinedContent
+    })
+    .then(response => {
+        console.log(response);
+        // summary와 todo 데이터를 클라이언트에 보냄
+        const { summary, todo } = response.data;
+   
+        //DB 저장
+        // wsServer.to(roomName).emit("ai_summary", { summary, todo });
+    })
+    .catch(error => {
+        if (error.code === 'ECONNREFUSED') {
+            console.error('SUMMARY : Connection refused. Please check the server status.');
+        } else {
+            console.error('SUMMARY : An unexpected error occurred:', error.message);
+        }
+    })
+  }
+
   // 방 퇴장 로직
-  socket.on('leave_room', async roomName => {
-    console.log(`User ${socket.id} is leaving room: ${roomName}`);
+  socket.on('leave_room', async (data) => {
+    const { roomName, chatMessages } = data;
+    requestAISummary(roomName, chatMessages);
 
     socket.off('audio_chunk', handleAudioChunk);
     console.log(`[Audio] audio_chunk listener removed for room: ${roomName}`);
@@ -158,6 +186,7 @@ wsServer.on('connection', socket => {
 
     const userCount = wsServer.sockets.adapter.rooms.get(roomName)?.size || 0;
     if (userCount === 0) {
+
       console.log(`[Room] Last user left. Cleaning up room: ${roomName}`);
       try {
         await transcribeService.stopTranscribe(roomName); // AWS Transcribe 및 스트림 종료

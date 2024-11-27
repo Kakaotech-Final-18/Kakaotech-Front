@@ -358,7 +358,11 @@ const CallScreen = () => {
     if (socket) {
       console.log('Sending leave_room event to server.');
       socket.off('audio_chunk'); // audio_chunk 이벤트 중단
-      socket.emit('leave_room', roomName);
+      console.log(chatMessages);
+      socket.emit('leave_room', {
+        roomName: roomName,
+        chatMessages: chatMessages, // 문자열화
+    });
     }
 
     navigate('/call/home');

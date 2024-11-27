@@ -1,0 +1,122 @@
+/* 큰 컨테이너 */
+.call-home-container {
+  padding: 24px;
+  background-color: #fff4d1;
+  border-radius: 16px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 480px;
+  margin: 32px auto;
+}
+
+/* 프로필 섹션 */
+.profile-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.profile-picture {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid #4f9456;
+  object-fit: cover;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-left: 16px;
+  flex: 1;
+}
+
+.nickname {
+  font-size: 32px; /* 프로필 사진의 1/2 크기 */
+  font-weight: bold;
+  color: var(--color-text-main);
+  margin-bottom: 8px;
+}
+
+/* 방 생성 버튼 */
+.create-room-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  border: 1px solid var(--color-button-border);
+  background-color: var(--color-button-background);
+  color: var(--color-button-text);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.create-room-button:hover {
+  background-color: rgba(75, 140, 90, 0.8);
+}
+
+.create-room-button:active {
+  background-color: rgba(75, 140, 90, 0.6);
+}
+
+.phone-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* 링크 컨테이너 */
+.room-link-container {
+  margin-top: 32px;
+  background-color: #98c485;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.room-link-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: var(--color-text-main);
+}
+
+.room-code {
+  background-color: #fff4d1;
+  border: 1px solid #000000;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+/* 공유하기 버튼과 통화 시작 버튼 */
+.share-button,
+.join-room-button {
+  margin-top: 16px;
+  padding: 12px 24px;
+  border: 1px solid var(--color-button-border);
+  background-color: #fffdf5;
+  color: var(--color-button-text);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.share-button:hover,
+.join-room-button:hover {
+  background-color: rgba(240, 240, 240, 0.8);
+}
+
+.share-button:active,
+.join-room-button:active {
+  background-color: rgba(230, 230, 230, 0.8);
+}
+/* 버튼 그룹 */
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+}

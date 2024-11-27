@@ -1,7 +1,6 @@
 import React from 'react';
 import { useEffect } from 'react';
 import './ShareButton.css';
-import ParrotImage from '../assets/parrot-share-square.svg';
 const { Kakao } = window;
 
 const ShareButton = ({ roomLink }) => {

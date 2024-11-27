@@ -99,7 +99,7 @@
   border: 1px solid var(--color-button-border);
   background-color: #fffdf5;
   color: var(--color-button-text);
-  border-radius: 8px;
+  border-radius: 24px;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }

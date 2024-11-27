@@ -1,0 +1,15 @@
+.share-button {
+  padding: 8px 16px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #fee500; /* Kakao 공식 노란색 */
+  color: #3c1e1e; /* Kakao 공식 텍스트 색상 */
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.share-button:hover {
+  background-color: #ffd700;
+}

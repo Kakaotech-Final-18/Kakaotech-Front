@@ -1,10 +1,9 @@
 import React from 'react';
 import { useEffect } from 'react';
 import './ShareButton.css';
-import ParrotImage from '../assets/parrot-share-square.svg';
 const { Kakao } = window;
 
-const ShareButton = ({ roomLink }) => {
+const ShareButton = ({ roomLink, className }) => {
   useEffect(() => {
     Kakao.cleanup();
     if (!Kakao.isInitialized()) {
@@ -42,8 +41,12 @@ const ShareButton = ({ roomLink }) => {
   };
 
   return (
-    <button type="button" className="share-button" onClick={handleShare}>
-      통화방 공유하기
+    <button
+      type="button"
+      className={`share-button ${className} `}
+      onClick={handleShare}
+    >
+      공유하기
     </button>
   );
 };

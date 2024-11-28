@@ -2,7 +2,8 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-background-main);
+  background: url('../assets/main-background.svg') no-repeat center center fixed;
+  background-size: cover;
 }
 
 .main-content {

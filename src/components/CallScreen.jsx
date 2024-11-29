@@ -3,7 +3,8 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getMedia, makeConnection } from '../services/WebrtcService';
 import { useSocket } from '../context/SocketContext';
 import CallSetting from './CallSetting';
-import ChatBox from './ChatBox';
+import CallChatScreen from './CallChatScreen';
+import CallVoiceScreen from './CallVoiceScreen';
 
 const CallScreen = () => {
   const location = useLocation();
@@ -89,15 +90,14 @@ const CallScreen = () => {
   };
 
   const handleConfirm = option => {
-    // CallSetting으로부터 onConfirm callback으로 option 받아서 전화시작
     setScreenType(option);
     setSelectionLocked(true);
-    handleStartCall();
+    handleStartCall(option);
   };
 
-  const handleStartCall = async () => {
+  const handleStartCall = async selectedScreenType => {
     if (!roomName || !email || !socket) {
-      alert('error occured. going back to home.');
+      alert('오류가 발생해서 방 생성 페이지로 돌아갑니다.');
       navigate('/call/home');
       return;
     }
@@ -130,7 +130,7 @@ const CallScreen = () => {
       myDataChannel.current.onmessage = handleReceiveMessage;
       console.log('DataChannel created for chat');
 
-      socket.emit('join_room', roomName, email, screenType);
+      socket.emit('join_room', roomName, email, selectedScreenType);
     } catch (error) {
       console.error('Error during call setup:', error);
     }
@@ -401,34 +401,38 @@ const CallScreen = () => {
 
   return (
     <div id="call">
+      <video ref={myVideoRef} autoPlay playsInline width="0" height="0" muted />
+      <video ref={peerVideoRef} autoPlay playsInline width="0" height="0" />
       {!isSelectionLocked ? (
         <CallSetting onConfirm={handleConfirm} />
+      ) : screenType === 'voice' ? (
+        <CallVoiceScreen onEndCall={handleLeaveRoom} />
       ) : (
-        <>
-          {screenType === 'chat' && (
-            <div id="chatBox">
-              <ChatBox
-                messages={chatMessages}
-                onSendMessage={handleSendMessage}
-                recommendations={recommendations}
-                clearRecommendations={clearRecommendations}
-              />
-            </div>
-          )}
-          <video
-            ref={myVideoRef}
-            autoPlay
-            playsInline
-            width="0"
-            height="0"
-            muted
-          />
-          <video ref={peerVideoRef} autoPlay playsInline width="0" height="0" />
-          <button onClick={handleLeaveRoom}>Leave Room</button>
-        </>
+        <CallChatScreen
+          onEndCall={handleLeaveRoom}
+          messages={chatMessages}
+          onSendMessage={handleSendMessage}
+          recommendations={recommendations}
+          clearRecommendations={clearRecommendations}
+        />
       )}
     </div>
   );
 };
 
 export default CallScreen;
+
+// <>
+//   {screenType === 'chat' && (
+//     <div id="chatBox">
+//       <ChatBox
+//         messages={chatMessages}
+//         onSendMessage={handleSendMessage}
+//         recommendations={recommendations}
+//         clearRecommendations={clearRecommendations}
+//       />
+//     </div>
+//   )}
+
+//   <button onClick={handleLeaveRoom}>Leave Room</button>
+// </>

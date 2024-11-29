@@ -261,9 +261,7 @@ const CallScreen = () => {
 
       processor.port.onmessage = event => {
         const audioChunk = event.data;
-        if (screenType === 'chat') {
-          socket.emit('audio_chunk', audioChunk, roomName);
-        }
+        socket.emit('audio_chunk', audioChunk, roomName);
       };
 
       source.connect(processor);
@@ -421,18 +419,3 @@ const CallScreen = () => {
 };
 
 export default CallScreen;
-
-// <>
-//   {screenType === 'chat' && (
-//     <div id="chatBox">
-//       <ChatBox
-//         messages={chatMessages}
-//         onSendMessage={handleSendMessage}
-//         recommendations={recommendations}
-//         clearRecommendations={clearRecommendations}
-//       />
-//     </div>
-//   )}
-
-//   <button onClick={handleLeaveRoom}>Leave Room</button>
-// </>

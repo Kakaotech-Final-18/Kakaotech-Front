@@ -2,7 +2,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: url('../assets/background-main.svg') no-repeat center center fixed;
+  background: url('../assets/background-main.png') no-repeat center center fixed;
   background-size: cover;
 }
 

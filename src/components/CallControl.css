@@ -1,0 +1,44 @@
+.call-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--color-container1-background);
+  border: 2px solid var(--color-container1-border);
+  border-radius: 36px;
+  padding: 8px 16px;
+  box-sizing: border-box;
+}
+
+.call-control-profile {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.call-control-nickname {
+  flex-grow: 1;
+  margin-left: 12px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--color-text-main);
+}
+
+.call-control-end-button {
+  margin-top: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.call-control-end-button img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+.call-control-end-button img:hover {
+  transform: scale(1.1);
+}

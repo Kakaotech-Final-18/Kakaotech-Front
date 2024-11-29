@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  frontend:
+    build: 
+      context: ${FRONTEND_PATH}
+    environment:
+      - VITE_SOCKET_URL=${VITE_SOCKET_URL}
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ${BACKEND_PATH}
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+
+  ai:
+    build:
+      context: ${AI_PATH}
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    ports:
+      - "4040:4040"
+    command:
+      - "http"
+      - "frontend:80"
+    depends_on:
+      - frontend
+    networks:
+      - app-network
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+
+networks:
+  app-network:
+    driver: bridge

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getMedia, makeConnection } from '../services/WebrtcService';
 import { useSocket } from '../context/SocketContext';
+import CallSetting from './CallSetting';
 import ChatBox from './ChatBox';
 
 const CallScreen = () => {
@@ -24,7 +25,7 @@ const CallScreen = () => {
   const [screenType, setScreenType] = useState(null);
   const [isSelectionLocked, setSelectionLocked] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
-  const [recommendations, setRecommendations] = useState([]); // Recommendations 상태 추가
+  const [recommendations, setRecommendations] = useState([]);
 
   useEffect(() => {
     console.log('Extracted email:', email);
@@ -74,17 +75,24 @@ const CallScreen = () => {
     socket.on('room_full', handleRoomFull);
     socket.on('transcript', handleTranscript);
     socket.on('stop_audio_chunk', handleStopAudioChunk);
-    socket.on('recommendations', handleRecommendations); // Recommendations 이벤트 추가
+    socket.on('recommendations', handleRecommendations);
     console.log('Socket events registered.');
   };
 
   const handleRecommendations = data => {
     console.log('Received recommendations:', data);
-    setRecommendations(data); // Recommendations 상태 업데이트
+    setRecommendations(data);
   };
 
   const clearRecommendations = () => {
     setRecommendations([]);
+  };
+
+  const handleConfirm = option => {
+    // CallSetting으로부터 onConfirm callback으로 option 받아서 전화시작
+    setScreenType(option);
+    setSelectionLocked(true);
+    handleStartCall();
   };
 
   const handleStartCall = async () => {
@@ -362,7 +370,7 @@ const CallScreen = () => {
       socket.emit('leave_room', {
         roomName: roomName,
         chatMessages: chatMessages, // 문자열화
-    });
+      });
     }
 
     navigate('/call/home');
@@ -394,30 +402,7 @@ const CallScreen = () => {
   return (
     <div id="call">
       {!isSelectionLocked ? (
-        <div id="selection">
-          <h2>Select Call Mode</h2>
-          <label>
-            <input
-              type="radio"
-              name="screenType"
-              value="voice"
-              onChange={() => setScreenType('voice')}
-            />
-            Voice Only
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="screenType"
-              value="chat"
-              onChange={() => setScreenType('chat')}
-            />
-            With Chat
-          </label>
-          <button disabled={!screenType} onClick={handleStartCall}>
-            Confirm
-          </button>
-        </div>
+        <CallSetting onConfirm={handleConfirm} />
       ) : (
         <>
           {screenType === 'chat' && (

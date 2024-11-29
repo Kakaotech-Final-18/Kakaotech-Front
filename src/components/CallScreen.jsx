@@ -373,7 +373,7 @@ const CallScreen = () => {
       });
     }
 
-    navigate('/call/home');
+    navigate('/call/end');
   };
 
   const handleRoomFull = () => {

@@ -4,6 +4,7 @@ import MainLayout from './layouts/MainLayout';
 import OnboardingScreen from './components/OnboardingScreen';
 import CallHomeScreen from './components/CallHomeScreen';
 import CallScreen from './components/CallScreen';
+import EndCallScreen from './components/EndCallScreen';
 import { SocketProvider } from './context/SocketContext';
 
 const App = () => {
@@ -15,6 +16,7 @@ const App = () => {
             <Route path="/" element={<OnboardingScreen />} />
             <Route path="/call/home" element={<CallHomeScreen />} />
             <Route path="/call/:roomName" element={<CallScreen />} />
+            <Route path="/call/end" element={<EndCallScreen />} />
           </Routes>
         </MainLayout>
       </Router>

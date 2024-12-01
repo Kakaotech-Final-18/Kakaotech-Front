@@ -1,26 +1,26 @@
 .chat-box {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  width: 100%;
-  height: 100%;
-  padding: 10px;
-  background-color: transparent;
-  box-sizing: border-box;
+  justify-content: flex-end;
+  flex: 1; /* 남은 공간 모두 차지 */
+  overflow: hidden; /* 초과 내용 숨기기 */
+  position: relative; /* 내부 요소 배치를 위한 상대 위치 */
+  padding-top: 20px;
 }
 
 /* 메시지 영역 */
 .chat-messages {
-  flex: 0 0 60%; /* 전체 화면의 60% */
-  list-style-type: none;
-  padding: 10px;
+  flex: 1; /* 남은 공간 모두 차지 */
+  overflow-y: auto; /* 메시지 스크롤 가능 */
+  padding: 10px 0; /* 상하 여백 */
   margin: 0;
-  overflow-y: auto; /* 메시지가 넘칠 경우 스크롤 */
+  background: transparent;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  border-radius: 5px;
-  background-color: transparent;
+  gap: 10px; /* 메시지 간 간격 */
+  padding-left: 10px; /* CallControl 좌우 여백 */
+  padding-right: 10px; /* CallControl 좌우 여백 */
+  box-sizing: border-box;
 }
 
 /* 개별 메시지 */
@@ -65,21 +65,27 @@
 
 /* 추천 문구 영역 */
 .chat-recommendations {
-  flex: 0 0 20%; /* 전체 화면의 20% */
+  flex-shrink: 0; /* 크기 고정 */
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 10px 0;
-  overflow-y: auto;
+  flex-direction: column;
+  gap: 10px; /* 추천 버튼 간 간격 */
+  margin: 0;
+  padding: 10px 0; /* 상하 여백 */
+  padding-left: 10px; /* CallControl 좌우 여백 */
+  padding-right: 10px; /* CallControl 좌우 여백 */
+  box-sizing: border-box;
+  margin-bottom: 70px; /* 입력창과 추가 여백 */
+  background-color: transparent;
 }
 
+/* 추천 버튼 */
 .recommendation-button {
-  background-color: #e0f7fa;
-  color: #00695c;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background-color: var(--color-container2-background);
+  color: var(--color-text-main);
   border: none;
-  padding: 8px 12px;
-  border-radius: 5px;
-  font-size: 14px;
   cursor: pointer;
   transition: background-color 0.3s;
 }
@@ -95,15 +101,22 @@
 
 /* 입력 영역 */
 .chat-input-form {
-  flex: 0 0 10%; /* 전체 화면의 10% */
   display: flex;
   align-items: center;
+  justify-content: space-between; /* 입력 칸과 버튼을 양쪽 정렬 */
   gap: 10px;
-  margin-top: 10px;
+  padding: 10px;
+  background-color: transparent; /* 배경 투명 */
+  position: fixed;
+  bottom: 0; /* 화면 하단 고정 */
+  left: 10px; /* CallControl 좌우 여백 */
+  right: 10px; /* CallControl 좌우 여백 */
+  max-width: calc(100% - 20px); /* CallControl과 동일한 좌우 여백 */
+  box-sizing: border-box;
 }
 
 .chat-input {
-  flex: 1;
+  flex: 1; /* 입력창이 남은 공간 차지 */
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 5px;

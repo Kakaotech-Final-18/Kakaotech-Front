@@ -13,4 +13,5 @@
   ); /* Header 높이 고려 */
   padding-left: var(--spacing);
   padding-right: var(--spacing);
+  box-sizing: border-box;
 }

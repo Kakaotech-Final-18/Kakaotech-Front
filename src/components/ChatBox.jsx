@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './ChatBox.css';
 
 const ChatBox = ({
@@ -7,12 +7,15 @@ const ChatBox = ({
   recommendations,
   clearRecommendations,
 }) => {
-  const chatInputRef = React.useRef();
-  const messagesEndRef = useRef(null);
+  const [localRecommendations, setLocalRecommendations] =
+    useState(recommendations);
+  const chatInputRef = useRef();
+  const messagesEndRef = useRef();
 
   const sendMessage = message => {
     if (message.trim()) {
       onSendMessage(message);
+      setLocalRecommendations([]); // 전송 시 추천 문구 제거
     }
   };
 
@@ -27,9 +30,15 @@ const ChatBox = ({
   const handleRecommendationClick = rec => {
     sendMessage(rec);
     clearRecommendations();
+    setLocalRecommendations([]); // 클릭 시 추천 문구 제거
   };
 
-  // 새 메시지가 추가될 때마다 스크롤을 아래로 유지
+  // 추천 문구 변경 시 업데이트
+  useEffect(() => {
+    setLocalRecommendations(recommendations);
+  }, [recommendations]);
+
+  // 메시지 추가 시 자동 스크롤
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -38,32 +47,30 @@ const ChatBox = ({
 
   return (
     <div className="chat-box">
-      {/* 채팅 메시지 로그 */}
       <ul className="chat-messages">
         {messages.map((msg, idx) => (
           <li key={idx} className={`chat-message ${msg.type}`}>
             <span className="message-bubble">{msg.content}</span>
           </li>
         ))}
-        {/* 스크롤을 아래로 유지하기 위한 더미 요소 */}
         <div ref={messagesEndRef}></div>
       </ul>
 
-      {/* 추천 문장 버튼 영역 */}
-      <div className="chat-recommendations">
-        {recommendations.map((rec, idx) => (
-          <button
-            key={idx}
-            type="button"
-            className="recommendation-button"
-            onClick={() => handleRecommendationClick(rec)}
-          >
-            {rec}
-          </button>
-        ))}
-      </div>
+      {localRecommendations.length > 0 && (
+        <div className="chat-recommendations">
+          {localRecommendations.map((rec, idx) => (
+            <button
+              key={idx}
+              type="button"
+              className="recommendation-button"
+              onClick={() => handleRecommendationClick(rec)}
+            >
+              {rec}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* 채팅 입력 폼 */}
       <form
         className="chat-input-form"
         onSubmit={e => {

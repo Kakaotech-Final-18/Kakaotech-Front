@@ -6,6 +6,7 @@ import PhoneIcon from '../assets/phone-icon.svg';
 import DefaultProfile from '../assets/default-profile.svg';
 import './CallHomeScreen.css';
 import { useUserInfo } from '../context/UserInfoContext'; // UserInfoContext 가져오기
+import axios from 'axios'; // axios 가져오기
 
 const CallHomeScreen = () => {
   const [roomLink, setRoomLink] = useState('');
@@ -18,8 +19,7 @@ const CallHomeScreen = () => {
   const fetchUserInfo = async (accessToken) => {
     try {
       console.log(accessToken);
-      await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/user/info`, {
-        method: 'GET',
+      await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/v1/user/info`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -56,10 +56,14 @@ const CallHomeScreen = () => {
         }
 
         // Access Token 요청
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/access?userId=${userId}`, {
-          method: 'POST',
-          credentials: 'include', // 쿠키 포함
-        })
+        await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/access`,
+          {},
+          {
+            params: { userId },
+            withCredentials: true, // 쿠키 포함
+          }
+        )
         .then(async response => {
           const accessToken = response.headers.get('Authorization')?.replace('Bearer ', '');
            // LocalStorage에 저장

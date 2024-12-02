@@ -6,9 +6,6 @@ import KakaoIcon from '/kakao-icon.svg';
 const Login = () => {
   const handleSocialLogin = (provider) => {
     const loginUrl = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/${provider}`;
-
-    console.log(`Redirecting to ${provider} login:`, loginUrl);
-
     // 브라우저를 지정된 소셜 로그인 URL로 리다이렉트
     window.location.href = loginUrl;
   };

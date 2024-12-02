@@ -239,7 +239,7 @@ wsServer.on('connection', socket => {
       console.log("TTS 서버 응답:", response.data);
 
       // 요청한 클라이언트에게 응답 데이터 전달
-      socket.emit("tts_response", { success: true, data: response.data });
+      socket.emit("tts_response", { success: true, data: response.data["audio_base64"] });
     } catch (error) {
       // 에러 처리
       console.error("TTS 요청 실패:", error.message);

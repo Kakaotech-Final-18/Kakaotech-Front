@@ -80,12 +80,11 @@ const CallScreen = () => {
   };
 
   const handleTTS = audioBase64 => {
-    console.log('Received TTS audio:', audioBase64);
   
     // Base64 디코딩 후 ArrayBuffer로 변환 및 오디오 재생
     const playAudio = async () => {
       try {
-        const audioData = atob(audioBase64);
+        const audioData = atob(audioBase64['data']);
         const arrayBuffer = new Uint8Array(audioData.length).map((_, i) => audioData.charCodeAt(i)).buffer;
   
         const audioContext = new window.AudioContext();

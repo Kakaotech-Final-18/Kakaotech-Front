@@ -2,7 +2,8 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-background-main);
+  background: url('../assets/background-main.png') no-repeat center center fixed;
+  background-size: cover;
 }
 
 .main-content {
@@ -12,4 +13,5 @@
   ); /* Header 높이 고려 */
   padding-left: var(--spacing);
   padding-right: var(--spacing);
+  box-sizing: border-box;
 }

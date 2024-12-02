@@ -1,4 +1,4 @@
-import React from 'react';
+import { useEffect, React } from 'react';
 import './Login.css';
 import GoogleIcon from '/google-icon.svg';
 import KakaoIcon from '/kakao-icon.svg';

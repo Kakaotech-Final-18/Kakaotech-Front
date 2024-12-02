@@ -155,7 +155,7 @@ wsServer.on('connection', socket => {
         const { summary, todo } = response.data;
    
         //DB 저장
-        // wsServer.to(roomName).emit("ai_summary", { summary, todo });
+        wsServer.to(roomName).emit("ai_summary", { summary, todo });
     })
     .catch(error => {
         if (error.code === 'ECONNREFUSED') {

@@ -1,20 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client';
 import './EndCallScreen.css';
 import CallControl from './CallControl';
 
-const EndCallScreen = () => {
-  const navigate = useNavigate();
+const socket = io(process.env.REACT_APP_SOCKET_URL || "http://localhost:3000");
 
-  // 통화 요약 정보를 설정
-  const callSummary = {
-    caller: '정은체 님',
-    todos: [
-      { id: 1, text: '5시 60분 장보기', completed: false },
-      { id: 2, text: '꿈에서 만나기', completed: false },
-      { id: 3, text: '동생 픽업하기', completed: false },
-    ],
-  };
+const EndCallScreen = ({ roomName }) => {
+  const navigate = useNavigate();
+  const [todos, setTodos] = useState([]);
+  const [summary, setSummary] = useState("");
+
+  useEffect(() => {
+    // 서버에서 'ai_summary' 이벤트 수신
+    socket.on("ai_summary", ({ summary, todo }) => {
+      setSummary(summary);
+      setTodos(todo);
+    });
+
+    return () => {
+      socket.off("ai_summary"); // 컴포넌트 언마운트 시 이벤트 제거
+    };
+  }, []);
 
   const handleConfirm = () => {
     navigate('/call/home'); // '/call/home'으로 이동
@@ -25,16 +32,20 @@ const EndCallScreen = () => {
       <CallControl />
       <div className="summary-todo">
         <h3>앵픽된 Todo</h3>
-        <ul>
-          {callSummary.todos.map((todo) => (
-            <li key={todo.id}>
-              <label>
-                <input type="checkbox" />
-                {todo.text}
-              </label>
-            </li>
-          ))}
-        </ul>
+        {todos.length > 0 ? (
+          <ul>
+            {todos.map((todo, index) => (
+              <li key={index}>
+                <label>
+                  <input type="checkbox" />
+                  {todo.text}
+                </label>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p id="notodo">Todo가 없습니다.</p>
+        )}
       </div>
       <button className="select-button" onClick={handleConfirm}>
         선택 항목 기록하기

@@ -75,8 +75,44 @@ const CallScreen = () => {
     socket.on('transcript', handleTranscript);
     socket.on('stop_audio_chunk', handleStopAudioChunk);
     socket.on('recommendations', handleRecommendations); // Recommendations 이벤트 추가
+    socket.on("tts_response", handleTTS);
     console.log('Socket events registered.');
   };
+
+  const handleTTS = audioBase64 => {
+    console.log('Received TTS audio:', audioBase64);
+  
+    // Base64 디코딩 후 ArrayBuffer로 변환 및 오디오 재생
+    const playAudio = async () => {
+      try {
+        const audioData = atob(audioBase64);
+        const arrayBuffer = new Uint8Array(audioData.length).map((_, i) => audioData.charCodeAt(i)).buffer;
+  
+        const audioContext = new window.AudioContext();
+        const decodedData = await audioContext.decodeAudioData(arrayBuffer);
+  
+        const source = audioContext.createBufferSource();
+        source.buffer = decodedData;
+  
+        // 오디오 재생
+        source.connect(audioContext.destination);
+        source.start(0);
+  
+        // 재생 완료 후 리소스 정리
+        source.onended = () => {
+          source.disconnect();
+          audioContext.close();
+          console.log('TTS audio playback finished');
+        };
+      } catch (error) {
+        console.error('Error playing TTS audio:', error);
+      }
+    };
+  
+    // 오디오 재생 호출
+    playAudio();
+  };
+  
 
   const handleRecommendations = data => {
     console.log('Received recommendations:', data);
@@ -172,6 +208,7 @@ const CallScreen = () => {
       ...prev,
       { type: 'peer_message', content: event.data },
     ]);
+    socket.emit("request_tts", event.data, roomName);
   };
 
   const handleSendMessage = message => {

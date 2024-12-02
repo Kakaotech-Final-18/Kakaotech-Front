@@ -58,6 +58,8 @@ const CallScreen = () => {
     socket.off('room_full');
     socket.off('transcript', handleTranscript);
     socket.off('stop_audio_chunk', handleStopAudioChunk);
+    socket.off('recommendations', handleRecommendations);
+    socket.off("tts_response", handleTTS);
   };
 
   const registerSocketEvents = socket => {
@@ -74,7 +76,7 @@ const CallScreen = () => {
     socket.on('room_full', handleRoomFull);
     socket.on('transcript', handleTranscript);
     socket.on('stop_audio_chunk', handleStopAudioChunk);
-    socket.on('recommendations', handleRecommendations); // Recommendations 이벤트 추가
+    socket.on('recommendations', handleRecommendations);
     socket.on("tts_response", handleTTS);
     console.log('Socket events registered.');
   };

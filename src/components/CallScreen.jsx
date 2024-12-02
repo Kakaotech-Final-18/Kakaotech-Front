@@ -20,10 +20,11 @@ const CallScreen = () => {
   const { roomName } = useParams();
   const socket = useSocket();
 
+  // TODO : 로그인 붙이면서 이거 고치기
   const [email, setEmail] = useState(
     location.state?.email || 'callee@parrotalk.com'
   );
-  const [screenType, setScreenType] = useState(null);
+  const screenType = useRef(null);
   const [isSelectionLocked, setSelectionLocked] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
@@ -90,12 +91,12 @@ const CallScreen = () => {
   };
 
   const handleConfirm = option => {
-    setScreenType(option);
+    screenType.current = option;
     setSelectionLocked(true);
-    handleStartCall(option);
+    handleStartCall();
   };
 
-  const handleStartCall = async selectedScreenType => {
+  const handleStartCall = async () => {
     if (!roomName || !email || !socket) {
       alert('오류가 발생해서 방 생성 페이지로 돌아갑니다.');
       navigate('/call/home');
@@ -130,7 +131,7 @@ const CallScreen = () => {
       myDataChannel.current.onmessage = handleReceiveMessage;
       console.log('DataChannel created for chat');
 
-      socket.emit('join_room', roomName, email, selectedScreenType);
+      socket.emit('join_room', roomName, email, screenType.current);
     } catch (error) {
       console.error('Error during call setup:', error);
     }
@@ -265,10 +266,13 @@ const CallScreen = () => {
         // 원래 chat으로 잘돌아갔었음
         // 지금은 chat, voice 둘다 나오게 해야 뭐가 혼재되어서 나옴
         // 뭔가 잘못된듯
-        // if (screenType === 'chat') {
-        //   socket.emit('audio_chunk', audioChunk, roomName);
-        // }
-        socket.emit('audio_chunk', audioChunk, roomName);
+        console.log(
+          '[handleAddStream] current screentype : ',
+          screenType.current
+        );
+        if (screenType.current === 'chat') {
+          socket.emit('audio_chunk', audioChunk, roomName);
+        }
       };
 
       source.connect(processor);
@@ -337,7 +341,7 @@ const CallScreen = () => {
   const handleLeaveRoom = async () => {
     console.log(`${email} leaves room : ${roomName}`);
 
-    if (socket && screenType === 'chat') {
+    if (socket && screenType.current === 'chat') {
       console.log('Ending Transcribe session for room:', roomName);
       socket.emit('stop_transcribe', roomName); // 서버에서 Transcribe 종료
     }
@@ -388,7 +392,7 @@ const CallScreen = () => {
   const handlePeerLeft = peerEmail => {
     alert(`${peerEmail} has left the room.`);
     alert('press ok to end call.');
-    if (screenType === 'chat') {
+    if (screenType.current === 'chat') {
       console.log('Stopping Audio Processor for peer leave...');
       handleStopAudioChunk(roomName); // Audio Processor 정리
     }
@@ -410,7 +414,7 @@ const CallScreen = () => {
       <video ref={peerVideoRef} autoPlay playsInline width="0" height="0" />
       {!isSelectionLocked ? (
         <CallSetting onConfirm={handleConfirm} />
-      ) : screenType === 'voice' ? (
+      ) : screenType.current === 'voice' ? (
         <CallVoiceScreen onEndCall={handleLeaveRoom} />
       ) : (
         <CallChatScreen

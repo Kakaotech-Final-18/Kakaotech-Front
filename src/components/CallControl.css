@@ -1,3 +1,4 @@
+/* 기본 call-control 스타일 */
 .call-control {
   display: flex;
   justify-content: space-between;
@@ -12,6 +13,13 @@
   box-sizing: border-box;
   margin: 0 auto;
   width: calc(100% - 20px);
+}
+
+/* showEndCallButton이 false일 때 가운데 정렬 */
+.call-control.center-align {
+  justify-content: center; /* 가운데 정렬 */
+  position: static;
+
 }
 
 /* 프로필+닉네임 컨테이너 */
@@ -33,7 +41,7 @@
 
 /* 닉네임 */
 .call-control-nickname {
-  font-size: 130%; /* 폰트 크기 */
+  font-size: 150%; /* 폰트 크기 */
   font-weight: bold;
   color: var(--color-text-main);
 }

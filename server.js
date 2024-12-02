@@ -218,7 +218,37 @@ wsServer.on('connection', socket => {
   // 연결 해제 처리
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+  }); 
+  socket.on("request_tts", async (text, roomName) => {
+    try {
+      // 요청 데이터 설정
+      const requestData = {
+        text: text,
+        room_number: roomName,
+        voice_type: "male1",
+      };
+
+      // TTS 서버로 POST 요청 전송
+      const response = await axios.post(process.env.AI_TTS, requestData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      // 응답 처리
+      console.log("TTS 서버 응답:", response.data);
+
+      // 요청한 클라이언트에게 응답 데이터 전달
+      socket.emit("tts_response", { success: true, data: response.data["audio_base64"] });
+    } catch (error) {
+      // 에러 처리
+      console.error("TTS 요청 실패:", error.message);
+
+      // 요청한 클라이언트에게 에러 전달
+      socket.emit("tts_response", { success: false, error: error.message });
+    }
   });
+
 });
 
 const PORT = 3000;

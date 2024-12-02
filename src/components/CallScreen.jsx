@@ -266,10 +266,6 @@ const CallScreen = () => {
         // 원래 chat으로 잘돌아갔었음
         // 지금은 chat, voice 둘다 나오게 해야 뭐가 혼재되어서 나옴
         // 뭔가 잘못된듯
-        console.log(
-          '[handleAddStream] current screentype : ',
-          screenType.current
-        );
         if (screenType.current === 'chat') {
           socket.emit('audio_chunk', audioChunk, roomName);
         }

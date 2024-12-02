@@ -12,6 +12,17 @@ const ChatBox = ({
   const chatInputRef = useRef();
   const messagesEndRef = useRef();
 
+  useEffect(() => {
+    const buttons = document.querySelectorAll('.recommendation-button');
+    buttons.forEach(button => {
+      if (button.scrollWidth > button.clientWidth) {
+        button.classList.add('marquee');
+      } else {
+        button.classList.remove('marquee');
+      }
+    });
+  }, [recommendations]);
+
   const sendMessage = message => {
     if (message.trim()) {
       onSendMessage(message);
@@ -47,47 +58,50 @@ const ChatBox = ({
 
   return (
     <div className="chat-box">
-      <ul className="chat-messages">
+      {/* 메시지 영역 */}
+      <div className="chat-messages">
         {messages.map((msg, idx) => (
-          <li key={idx} className={`chat-message ${msg.type}`}>
+          <div key={idx} className={`chat-message ${msg.type}`}>
             <span className="message-bubble">{msg.content}</span>
-          </li>
+          </div>
         ))}
         <div ref={messagesEndRef}></div>
-      </ul>
+      </div>
 
-      {localRecommendations.length > 0 && (
-        <div className="chat-recommendations">
-          {localRecommendations.map((rec, idx) => (
-            <button
-              key={idx}
-              type="button"
-              className="recommendation-button"
-              onClick={() => handleRecommendationClick(rec)}
-            >
-              {rec}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* 추천 버튼과 입력창 영역 */}
+      <div className="chat-input-container">
+        {recommendations.length > 0 && (
+          <div className="chat-recommendations">
+            {recommendations.map((rec, idx) => (
+              <button
+                key={idx}
+                className="recommendation-button"
+                onClick={() => handleRecommendationClick(rec)}
+              >
+                {rec}
+              </button>
+            ))}
+          </div>
+        )}
 
-      <form
-        className="chat-input-form"
-        onSubmit={e => {
-          e.preventDefault();
-          handleSendButtonClick();
-        }}
-      >
-        <input
-          className="chat-input"
-          type="text"
-          placeholder="메시지를 입력하세요..."
-          ref={chatInputRef}
-        />
-        <button type="submit" className="send-button">
-          전송
-        </button>
-      </form>
+        <form
+          className="chat-input-form"
+          onSubmit={e => {
+            e.preventDefault();
+            handleSendButtonClick();
+          }}
+        >
+          <input
+            className="chat-input"
+            type="text"
+            placeholder="메시지를 입력하세요..."
+            ref={chatInputRef}
+          />
+          <button type="submit" className="send-button">
+            전송
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

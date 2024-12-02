@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getMedia, makeConnection } from '../services/WebrtcService';
 import { useSocket } from '../context/SocketContext';
-import ChatBox from './ChatBox';
+import CallSetting from './CallSetting';
+import CallChatScreen from './CallChatScreen';
+import CallVoiceScreen from './CallVoiceScreen';
 
 const CallScreen = () => {
   const location = useLocation();
@@ -18,13 +20,14 @@ const CallScreen = () => {
   const { roomName } = useParams();
   const socket = useSocket();
 
+  // TODO : 로그인 붙이면서 이거 고치기
   const [email, setEmail] = useState(
     location.state?.email || 'callee@parrotalk.com'
   );
-  const [screenType, setScreenType] = useState(null);
+  const screenType = useRef(null);
   const [isSelectionLocked, setSelectionLocked] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
-  const [recommendations, setRecommendations] = useState([]); // Recommendations 상태 추가
+  const [recommendations, setRecommendations] = useState([]);
 
   useEffect(() => {
     console.log('Extracted email:', email);
@@ -117,16 +120,22 @@ const CallScreen = () => {
 
   const handleRecommendations = data => {
     console.log('Received recommendations:', data);
-    setRecommendations(data); // Recommendations 상태 업데이트
+    setRecommendations(data);
   };
 
   const clearRecommendations = () => {
     setRecommendations([]);
   };
 
+  const handleConfirm = option => {
+    screenType.current = option;
+    setSelectionLocked(true);
+    handleStartCall();
+  };
+
   const handleStartCall = async () => {
     if (!roomName || !email || !socket) {
-      alert('error occured. going back to home.');
+      alert('오류가 발생해서 방 생성 페이지로 돌아갑니다.');
       navigate('/call/home');
       return;
     }
@@ -159,7 +168,7 @@ const CallScreen = () => {
       myDataChannel.current.onmessage = handleReceiveMessage;
       console.log('DataChannel created for chat');
 
-      socket.emit('join_room', roomName, email, screenType);
+      socket.emit('join_room', roomName, email, screenType.current);
     } catch (error) {
       console.error('Error during call setup:', error);
     }
@@ -291,7 +300,11 @@ const CallScreen = () => {
 
       processor.port.onmessage = event => {
         const audioChunk = event.data;
-        if (screenType === 'chat') {
+        // TODO : BUG
+        // 원래 chat으로 잘돌아갔었음
+        // 지금은 chat, voice 둘다 나오게 해야 뭐가 혼재되어서 나옴
+        // 뭔가 잘못된듯
+        if (screenType.current === 'chat') {
           socket.emit('audio_chunk', audioChunk, roomName);
         }
       };
@@ -362,7 +375,7 @@ const CallScreen = () => {
   const handleLeaveRoom = async () => {
     console.log(`${email} leaves room : ${roomName}`);
 
-    if (socket && screenType === 'chat') {
+    if (socket && screenType.current === 'chat') {
       console.log('Ending Transcribe session for room:', roomName);
       socket.emit('stop_transcribe', roomName); // 서버에서 Transcribe 종료
     }
@@ -400,10 +413,10 @@ const CallScreen = () => {
       socket.emit('leave_room', {
         roomName: roomName,
         chatMessages: chatMessages, // 문자열화
-    });
+      });
     }
 
-    navigate('/call/home');
+    navigate('/call/end');
   };
 
   const handleRoomFull = () => {
@@ -413,7 +426,7 @@ const CallScreen = () => {
   const handlePeerLeft = peerEmail => {
     alert(`${peerEmail} has left the room.`);
     alert('press ok to end call.');
-    if (screenType === 'chat') {
+    if (screenType.current === 'chat') {
       console.log('Stopping Audio Processor for peer leave...');
       handleStopAudioChunk(roomName); // Audio Processor 정리
     }
@@ -431,54 +444,20 @@ const CallScreen = () => {
 
   return (
     <div id="call">
+      <video ref={myVideoRef} autoPlay playsInline width="0" height="0" muted />
+      <video ref={peerVideoRef} autoPlay playsInline width="0" height="0" />
       {!isSelectionLocked ? (
-        <div id="selection">
-          <h2>Select Call Mode</h2>
-          <label>
-            <input
-              type="radio"
-              name="screenType"
-              value="voice"
-              onChange={() => setScreenType('voice')}
-            />
-            Voice Only
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="screenType"
-              value="chat"
-              onChange={() => setScreenType('chat')}
-            />
-            With Chat
-          </label>
-          <button disabled={!screenType} onClick={handleStartCall}>
-            Confirm
-          </button>
-        </div>
+        <CallSetting onConfirm={handleConfirm} />
+      ) : screenType.current === 'voice' ? (
+        <CallVoiceScreen onEndCall={handleLeaveRoom} />
       ) : (
-        <>
-          {screenType === 'chat' && (
-            <div id="chatBox">
-              <ChatBox
-                messages={chatMessages}
-                onSendMessage={handleSendMessage}
-                recommendations={recommendations}
-                clearRecommendations={clearRecommendations}
-              />
-            </div>
-          )}
-          <video
-            ref={myVideoRef}
-            autoPlay
-            playsInline
-            width="0"
-            height="0"
-            muted
-          />
-          <video ref={peerVideoRef} autoPlay playsInline width="0" height="0" />
-          <button onClick={handleLeaveRoom}>Leave Room</button>
-        </>
+        <CallChatScreen
+          onEndCall={handleLeaveRoom}
+          messages={chatMessages}
+          onSendMessage={handleSendMessage}
+          recommendations={recommendations}
+          clearRecommendations={clearRecommendations}
+        />
       )}
     </div>
   );

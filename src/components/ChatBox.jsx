@@ -1,13 +1,32 @@
-import React from 'react';
-
+import React, { useEffect, useRef, useState } from 'react';
 import './ChatBox.css';
 
-const ChatBox = ({ messages, onSendMessage, recommendations, clearRecommendations }) => {
+const ChatBox = ({
+  messages,
+  onSendMessage,
+  recommendations,
+  clearRecommendations,
+}) => {
+  const [localRecommendations, setLocalRecommendations] =
+    useState(recommendations);
+  const chatInputRef = useRef();
+  const messagesEndRef = useRef();
 
-  const chatInputRef = React.useRef();
+  useEffect(() => {
+    const buttons = document.querySelectorAll('.recommendation-button');
+    buttons.forEach(button => {
+      if (button.scrollWidth > button.clientWidth) {
+        button.classList.add('marquee');
+      } else {
+        button.classList.remove('marquee');
+      }
+    });
+  }, [recommendations]);
+
   const sendMessage = message => {
     if (message.trim()) {
       onSendMessage(message);
+      setLocalRecommendations([]); // 전송 시 추천 문구 제거
     }
   };
 
@@ -20,48 +39,69 @@ const ChatBox = ({ messages, onSendMessage, recommendations, clearRecommendation
   };
 
   const handleRecommendationClick = rec => {
-    sendMessage(rec); // 메시지 보내기
-    clearRecommendations(); // recommendations 배열 비우기
+    sendMessage(rec);
+    clearRecommendations();
+    setLocalRecommendations([]); // 클릭 시 추천 문구 제거
   };
 
-  return (
-    <div id="chatBox">
-      <ul id="logList">
-        {messages.map((msg, idx) => (
-          <li key={idx} className={msg.type}>
-            <span className="message-bubble">{msg.content}</span>
-          </li>
-        ))}
-      </ul>
-      <form
-        id="chatForm"
-        onSubmit={e => {
-          e.preventDefault();
-          handleSendButtonClick();
-        }}
-      >
-        <input
-          id="chatInput"
-          placeholder="Type a message"
-          type="text"
-          ref={chatInputRef}
-          required
-        />
+  // 추천 문구 변경 시 업데이트
+  useEffect(() => {
+    setLocalRecommendations(recommendations);
+  }, [recommendations]);
 
-        <div id="recommendationsBox">
-          {recommendations.map((rec, idx) => (
-            <button
-              key={idx}
-              type="button"
-              className="recommendation-button"
-              onClick={() => handleRecommendationClick(rec)}
-            >
-              {rec}
-            </button>
-          ))}
-        </div>
-        <button type="submit">Send</button>
-      </form>
+  // 메시지 추가 시 자동 스크롤
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  return (
+    <div className="chat-box">
+      {/* 메시지 영역 */}
+      <div className="chat-messages">
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`chat-message ${msg.type}`}>
+            <span className="message-bubble">{msg.content}</span>
+          </div>
+        ))}
+        <div ref={messagesEndRef}></div>
+      </div>
+
+      {/* 추천 버튼과 입력창 영역 */}
+      <div className="chat-input-container">
+        {recommendations.length > 0 && (
+          <div className="chat-recommendations">
+            {recommendations.map((rec, idx) => (
+              <button
+                key={idx}
+                className="recommendation-button"
+                onClick={() => handleRecommendationClick(rec)}
+              >
+                {rec}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <form
+          className="chat-input-form"
+          onSubmit={e => {
+            e.preventDefault();
+            handleSendButtonClick();
+          }}
+        >
+          <input
+            className="chat-input"
+            type="text"
+            placeholder="메시지를 입력하세요..."
+            ref={chatInputRef}
+          />
+          <button type="submit" className="send-button">
+            전송
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

@@ -6,6 +6,9 @@ class AudioProcessor extends AudioWorkletProcessor {
     this.rmsThreshold = 0.02; // RMS 임계값
     this.vad = null;
     this.isVadReady = false;
+    this.isProcessing = false; // 중복 호출 방지 플래그
+    this.vadInterval = 100; // ms 단위로 VAD 호출 간격 조절
+    this.lastVadCall = 0;
 
     // Silero VAD 초기화
     this.initializeVad();
@@ -20,9 +23,7 @@ class AudioProcessor extends AudioWorkletProcessor {
 
   async initializeVad() {
     try {
-      this.vad = await MicVAD.new({
-        onSpeechEnd: () => console.log('[AudioProcessor] Speech Ended'),
-      });
+      this.vad = await MicVAD.new({ baseUrl: '/' });
       console.log('[AudioProcessor] VAD initialized');
       this.isVadReady = true;
     } catch (error) {
@@ -39,19 +40,21 @@ class AudioProcessor extends AudioWorkletProcessor {
   }
 
   calculateRMS(buffer) {
+    const step = 4; // 샘플링 간격
     let sum = 0;
-    for (let i = 0; i < buffer.length; i++) {
+    for (let i = 0; i < buffer.length; i += step) {
       sum += buffer[i] * buffer[i];
     }
-    return Math.sqrt(sum / buffer.length);
+    return Math.sqrt(sum / (buffer.length / step));
   }
 
   async applyVadDetection(buffer) {
-    if (!this.isVadReady || !this.vad) return false;
+    if (!this.isVadReady || !this.vad || this.isProcessing) return false;
 
-    // VAD는 PCM Int16 데이터를 사용하므로 변환 필요
+    this.isProcessing = true; // VAD 호출 시작
     const int16Buffer = this.convertFloat32ToInt16(buffer);
     const isSpeech = await this.vad.processAudio(int16Buffer);
+    this.isProcessing = false; // 호출 종료
     return isSpeech;
   }
 
@@ -64,6 +67,12 @@ class AudioProcessor extends AudioWorkletProcessor {
   }
 
   async process(inputs, outputs, parameters) {
+    const now = currentTime * 1000; // AudioWorklet의 currentTime을 ms로 변환
+    if (now - this.lastVadCall < this.vadInterval) {
+      return true; // VAD 호출 간격이 유지되면 처리하지 않음
+    }
+    this.lastVadCall = now;
+
     const input = inputs[0];
     const channelData = input ? input[0] : null; // mono channel
 
@@ -73,7 +82,6 @@ class AudioProcessor extends AudioWorkletProcessor {
       if (rms > this.rmsThreshold) {
         // 2. VAD로 음성 감지
         const isSpeech = await this.applyVadDetection(channelData);
-
         if (isSpeech) {
           console.log('[AudioProcessor] Speech detected');
           // 3. Int16 변환 후 메인 스레드로 전송

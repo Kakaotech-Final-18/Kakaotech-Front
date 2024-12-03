@@ -7,6 +7,7 @@ export const getMedia = async () => {
   const constraints = {
     audio: {
       sampleRate: 48000,
+      spatialAudio: true,
       echoCancellation: true,
       noiseSuppression: true,
       autoGainControl: true,

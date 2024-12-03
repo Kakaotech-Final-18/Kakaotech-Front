@@ -1,4 +1,5 @@
 import { MicVAD } from '@ricky0123/vad-web';
+import { targetChunkSize } from '../../src/utils/constants';
 
 class AudioProcessor extends AudioWorkletProcessor {
   constructor() {
@@ -77,14 +78,15 @@ class AudioProcessor extends AudioWorkletProcessor {
     const channelData = input ? input[0] : null; // mono channel
 
     if (channelData) {
-      // 1. RMS 기반 필터링
+      // RMS 값 계산 및 임계값 비교
       const rms = this.calculateRMS(channelData);
+
       if (rms > this.rmsThreshold) {
-        // 2. VAD로 음성 감지
+        // 음성 활동 감지
         const isSpeech = await this.applyVadDetection(channelData);
         if (isSpeech) {
           console.log('[AudioProcessor] Speech detected');
-          // 3. Int16 변환 후 메인 스레드로 전송
+          // Int16 변환 후 메인 스레드로 전송
           const int16Data = this.convertFloat32ToInt16(channelData);
           const audioChunk = new Uint8Array(int16Data.buffer);
           this.port.postMessage(audioChunk);
@@ -93,7 +95,14 @@ class AudioProcessor extends AudioWorkletProcessor {
         }
       } else {
         console.log('[AudioProcessor] Ignored low RMS data (likely noise)');
+        // RMS 값이 낮을 경우 빈 청크 전송
+        const silentChunk = new Uint8Array(targetChunkSize); // 4KB 빈 청크
+        this.port.postMessage(silentChunk);
       }
+    } else {
+      // 입력이 없을 경우에도 빈 청크 전송
+      const silentChunk = new Uint8Array(targetChunkSize);
+      this.port.postMessage(silentChunk);
     }
 
     return true; // 계속 처리

@@ -150,12 +150,11 @@ wsServer.on('connection', socket => {
         sentence: combinedContent
     })
     .then(response => {
-        console.log(response);
         // summary와 todo 데이터를 클라이언트에 보냄
         const { summary, todo } = response.data;
-   
+        console.log(todo);
         //DB 저장
-        wsServer.to(roomName).emit("ai_summary", { summary, todo });
+        socket.emit('ai_summary', todo);
     })
     .catch(error => {
         if (error.code === 'ECONNREFUSED') {
@@ -234,9 +233,6 @@ wsServer.on('connection', socket => {
           "Content-Type": "application/json",
         },
       });
-
-      // 응답 처리
-      console.log("TTS 서버 응답:", response.data);
 
       // 요청한 클라이언트에게 응답 데이터 전달
       socket.emit("tts_response", { success: true, data: response.data["audio_base64"] });

@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import './EndCallScreen.css';
 import CallControl from './CallControl';
+import { useSocket } from '../context/SocketContext';
 
-const socket = io(process.env.REACT_APP_SOCKET_URL || "http://localhost:3000");
-
-const EndCallScreen = ({ roomName }) => {
+const EndCallScreen = () => {
   const navigate = useNavigate();
   const [todos, setTodos] = useState([]);
-  const [summary, setSummary] = useState("");
+  const [isLoading, setIsLoading] = useState(true); // 로딩 상태 관리
+  const socket = useSocket();
 
   useEffect(() => {
     // 서버에서 'ai_summary' 이벤트 수신
-    socket.on("ai_summary", ({ summary, todo }) => {
-      setSummary(summary);
+    socket.on("ai_summary", (todo) => {
+      console.log(todo);
       setTodos(todo);
+      setIsLoading(false); // 데이터를 받으면 로딩 상태 해제
     });
 
     return () => {
@@ -32,13 +32,15 @@ const EndCallScreen = ({ roomName }) => {
       <CallControl />
       <div className="summary-todo">
         <h3>앵픽된 Todo</h3>
-        {todos.length > 0 ? (
+        {isLoading ? ( // 로딩 상태 표시
+          <p>로딩 중입니다...</p>
+        ) : todos.length > 0 ? (
           <ul>
             {todos.map((todo, index) => (
               <li key={index}>
                 <label>
                   <input type="checkbox" />
-                  {todo.text}
+                  {todo}
                 </label>
               </li>
             ))}

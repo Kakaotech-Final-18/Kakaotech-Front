@@ -1,0 +1,8 @@
+.call-chat-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100vh;
+  box-sizing: border-box;
+  padding-top: 20px;
+}

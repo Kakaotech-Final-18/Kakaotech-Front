@@ -4,6 +4,7 @@ import MainLayout from './layouts/MainLayout';
 import OnboardingScreen from './components/OnboardingScreen';
 import CallHomeScreen from './components/CallHomeScreen';
 import CallScreen from './components/CallScreen';
+import EndCallScreen from './components/EndCallScreen';
 import { SocketProvider } from './context/SocketContext';
 import { UserInfoProvider } from './context/UserInfoContext';
 

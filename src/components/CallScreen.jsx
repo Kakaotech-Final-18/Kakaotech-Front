@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getMedia, makeConnection } from '../services/WebrtcService';
 import { useSocket } from '../context/SocketContext';
+import ChatBox from './ChatBox';
+import axios from 'axios';
 import CallSetting from './CallSetting';
 import CallChatScreen from './CallChatScreen';
 import CallVoiceScreen from './CallVoiceScreen';
@@ -24,6 +26,7 @@ const CallScreen = () => {
   const [email, setEmail] = useState(
     location.state?.email || 'callee@parrotalk.com'
   );
+  const [talkId, setTalkId] = useState(null); // talkId 상태 추가
   const screenType = useRef(null);
   const [isSelectionLocked, setSelectionLocked] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
@@ -31,6 +34,12 @@ const CallScreen = () => {
 
   useEffect(() => {
     console.log('Extracted email:', email);
+
+    const queryParams = new URLSearchParams(location.search);
+    console.log(queryParams);
+    const extractedTalkId = queryParams.get('talkId');
+    setTalkId(extractedTalkId);
+    console.log('Extracted talkId:', extractedTalkId);
 
     const initialize = async () => {
       if (socket && socket.connected) {
@@ -46,7 +55,7 @@ const CallScreen = () => {
     initialize();
 
     return () => {};
-  }, []);
+  }, [talkId]);
 
   const cleanupSocketEvents = socket => {
     socket.off('disconnect', () => handleDisconnect(socket));
@@ -236,6 +245,21 @@ const CallScreen = () => {
   const handleNotificationHi = peerEmail => {
     console.log(`${peerEmail} has joined the room.`);
     alert(`${peerEmail} has joined the room.`);
+    console.log(talkId);
+    axios.post(
+      `${import.meta.env.VITE_API_BASE_URL}/api/v1/talk/peer`,
+      {
+        talkId: talkId,
+        receiverEmail: peerEmail
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          Accept: 'application/json',
+        },
+      }
+    );
+
   };
 
   const handleOffer = async offer => {

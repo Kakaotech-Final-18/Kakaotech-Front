@@ -27,6 +27,7 @@ const CallHomeScreen = () => {
         }
       );
       const data = response.data;
+      console.log(data);
       setUserInfo({
         nickname: data.nickname,
         email: data.email,
@@ -73,9 +74,30 @@ const CallHomeScreen = () => {
   const handleJoinRoom = () => {
     if (roomLink) {
       const roomName = roomLink.split('/').pop();
-      navigate(`/call/${roomName}`, {
-        state: { email },
-      });
+      const email = userInfo.email;
+      
+      try {
+        axios.post(
+          `${import.meta.env.VITE_API_BASE_URL}/api/v1/talk/create`,
+          {
+            roomName: roomName
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+              Accept: 'application/json',
+            },
+          }
+        )
+        .then((response) => {
+          console.log(response);
+          navigate(`/call/${roomName}?talkId=${response.data}`, {
+            state: { email },
+          });
+        });
+      } catch (error) {
+        console.error('Error creating room in DB:', error);
+      }
     }
   };
 

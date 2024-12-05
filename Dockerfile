@@ -1,15 +1,14 @@
-FROM node:18-alpine AS builder
+FROM node:18-alpine
 WORKDIR /app
-ENV VITE_SOCKET_URL="https://call-dev.ptks.link"
 COPY package*.json ./
 RUN npm install
-COPY . .
-RUN npm run build
 
-FROM nginx:alpine
-WORKDIR /usr/share/nginx/html
-RUN rm -rf ./*
-COPY --from=builder /app/dist .
-COPY nginx.conf /etc/nginx/nginx.conf
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+COPY . .
+
+# 환경변수로 모드 설정
+ARG NODE_ENV=development
+ENV NODE_ENV=${NODE_ENV}
+RUN npm run build -- --mode ${NODE_ENV}
+
+EXPOSE 3000
+CMD ["npm", "start"]

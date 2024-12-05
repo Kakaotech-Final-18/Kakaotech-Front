@@ -6,21 +6,23 @@ import CallHomeScreen from './components/CallHomeScreen';
 import CallScreen from './components/CallScreen';
 import EndCallScreen from './components/EndCallScreen';
 import { SocketProvider } from './context/SocketContext';
+import { UserInfoProvider } from './context/UserInfoContext';
 
 const App = () => {
   return (
-    <SocketProvider>
-      <Router>
-        <MainLayout>
-          <Routes>
-            <Route path="/" element={<OnboardingScreen />} />
-            <Route path="/call/home" element={<CallHomeScreen />} />
-            <Route path="/call/:roomName" element={<CallScreen />} />
-            <Route path="/call/end" element={<EndCallScreen />} />
-          </Routes>
-        </MainLayout>
-      </Router>
-    </SocketProvider>
+    <UserInfoProvider>
+      <SocketProvider>
+        <Router>
+          <MainLayout>
+            <Routes>
+              <Route path="/" element={<OnboardingScreen />} />
+              <Route path="/call/home" element={<CallHomeScreen />} />
+              <Route path="/call/:roomName" element={<CallScreen />} />
+            </Routes>
+          </MainLayout>
+        </Router>
+      </SocketProvider>
+    </UserInfoProvider>
   );
 };
 

@@ -5,22 +5,64 @@ import { useSocket } from '../context/SocketContext';
 import PhoneIcon from '../assets/phone-icon.svg';
 import DefaultProfile from '../assets/default-profile.svg';
 import './CallHomeScreen.css';
+import { useUserInfo } from '../context/UserInfoContext';
+import axios from 'axios';
 
 const CallHomeScreen = () => {
   const [roomLink, setRoomLink] = useState('');
-  const [email, setEmail] = useState('');
   const [createButtonText, setCreateButtonText] = useState('방 생성');
   const navigate = useNavigate();
   const socket = useSocket();
+  const { userInfo, setUserInfo } = useUserInfo();
 
-  // 로그인 추가되면 이거 지울 것
+  const fetchUserInfo = async (accessToken) => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/api/v1/user/info`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: 'application/json',
+          },
+        }
+      );
+      const data = response.data;
+      setUserInfo({
+        nickname: data.nickname,
+        email: data.email,
+      });
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    }
+  };
+
+  const fetchToken = async () => {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/access`,
+        {},
+        {
+          withCredentials: true, // 쿠키 포함
+        }
+      );
+
+      const accessToken = response.headers['authorization']?.replace('Bearer ', '');
+      if (accessToken) {
+        localStorage.setItem('accessToken', accessToken);
+        console.log('Access Token 저장 완료:', accessToken);
+        await fetchUserInfo(accessToken);
+      }
+    } catch (error) {
+      console.error('Fetch Error:', error);
+    }
+  };
+
   useEffect(() => {
-    // 더미 이메일 값 설정
-    setEmail('caller@test.com');
+    fetchToken();
   }, []);
 
   const handleCreateRoom = () => {
-    socket.emit('create_room', roomName => {
+    socket.emit('create_room', (roomName) => {
       const link = `${window.location.origin}/call/${roomName}`;
       setRoomLink(link);
       console.log('Room created with link:', link);
@@ -28,13 +70,10 @@ const CallHomeScreen = () => {
     });
   };
 
-  // TODO : 나중에 로그인 추가되면 이메일 관련 고치기
   const handleJoinRoom = () => {
     if (roomLink) {
       const roomName = roomLink.split('/').pop();
-      console.log(`browser: email -> ${email}, socket -> ${socket}`);
       navigate(`/call/${roomName}`, {
-        // 더미 이메일 전달 : 로그인 추가되면 여기 고치기
         state: { email },
       });
     }
@@ -42,15 +81,10 @@ const CallHomeScreen = () => {
 
   return (
     <div className="call-home-container">
-      {/* 프로필 섹션 */}
       <div className="profile-section">
-        <img
-          src={DefaultProfile}
-          alt="Default Profile"
-          className="profile-picture"
-        />
+        <img src={DefaultProfile} alt="Default Profile" className="profile-picture" />
         <div className="profile-info">
-          <span className="nickname">닉네임</span>
+          <span className="nickname">{userInfo.nickname || '익명'}</span>
           <button
             type="button"
             className="create-room-button"
@@ -62,7 +96,6 @@ const CallHomeScreen = () => {
         </div>
       </div>
 
-      {/* 통화 코드 컨테이너 */}
       {roomLink && (
         <div className="room-link-container">
           <p className="room-link-title">통화 코드</p>

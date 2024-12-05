@@ -5,6 +5,7 @@ import './CallChatScreen.css';
 
 const CallChatScreen = ({
   nickname,
+  profileImage,
   onEndCall,
   messages,
   onSendMessage,
@@ -13,7 +14,7 @@ const CallChatScreen = ({
 }) => {
   return (
     <div className="call-chat-screen">
-      <CallControl nickname={nickname} onEndCall={onEndCall} />
+      <CallControl nickname={nickname} profileImage={profileImage} onEndCall={onEndCall} />
       <ChatBox
         messages={messages}
         onSendMessage={onSendMessage}

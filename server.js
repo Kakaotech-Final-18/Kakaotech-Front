@@ -57,7 +57,7 @@ wsServer.on('connection', socket => {
   });
 
   // 방 참여 로직
-  socket.on('join_room', (roomName, email, screenType) => {
+  socket.on('join_room', (roomName, email, nickname, profileImage, screenType) => {
     console.log(`roomname : ${roomName}`);
     console.log(`${email} joined room: ${roomName}`);
     const room = wsServer.sockets.adapter.rooms.get(roomName);
@@ -71,7 +71,7 @@ wsServer.on('connection', socket => {
 
       // rooms 객체에 email과 socket.id 저장
       if (!rooms[roomName]) rooms[roomName] = [];
-      rooms[roomName].push({ id: socket.id, email, screenType });
+      rooms[roomName].push({ id: socket.id, email, nickname, profileImage, screenType });
 
       // RoomManager에 방 추가 및 Transcribe 관련 설정
       if (!roomManager.isActive(roomName)) {
@@ -83,6 +83,15 @@ wsServer.on('connection', socket => {
       // 상대방에게 welcome 이벤트
       socket.to(roomName).emit('welcome');
       socket.to(roomName).emit('notification_hi', email);
+
+       // 상대방에게 다른 사람의 정보 전달
+       const otherUsers = rooms[roomName].filter(user => user.id !== socket.id);
+       if (otherUsers.length > 0) {
+           socket.emit('another_user', otherUsers.map(user => ({
+               nickname: user.nickname, // 닉네임 예시
+               profileImage: user.profileImage,
+           })));
+       }
 
       // With Chat 모드인 참여자가 있는지 확인
       const chatUser = rooms[roomName].find(user => user.screenType === 'chat');
@@ -104,6 +113,19 @@ wsServer.on('connection', socket => {
       }
     }
   });
+
+// 다른 사용자의 닉네임과 프로필 이미지 반환 이벤트
+socket.on('get_another_user', (roomName, callback) => {
+    if (!rooms[roomName]) {
+        return callback({ success: false, message: 'Room not found' });
+    }
+    const otherUsers = rooms[roomName].filter(user => user.id !== socket.id);
+    const response = otherUsers.map(user => ({
+        nickname: user.email.split('@')[0], // 닉네임은 이메일의 앞부분으로 예시
+        profileImage: user.profileImage,
+    }));
+    callback({ success: true, data: response });
+});
 
   const handleAudioChunk = (chunk, roomName) => {
     const audioStream = roomManager.getAudioStream(roomName);

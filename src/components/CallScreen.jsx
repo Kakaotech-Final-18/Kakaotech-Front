@@ -3,12 +3,12 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getMedia, makeConnection } from '../services/WebrtcService';
 import { useSocket } from '../context/SocketContext';
 import ChatBox from './ChatBox';
+import DefaultProfile from '../assets/default-profile.svg';
 import axios from 'axios';
 import CallSetting from './CallSetting';
 import CallChatScreen from './CallChatScreen';
 import CallVoiceScreen from './CallVoiceScreen';
 import { useUserInfo } from '../context/UserInfoContext';
-
 
 const CallScreen = () => {
   const location = useLocation();
@@ -27,20 +27,30 @@ const CallScreen = () => {
   const { userInfo, setUserInfo } = useUserInfo();
 
   // TODO : 로그인 붙이면서 이거 고치기
-  const [email, setEmail] = useState(
-    location.state?.email || 'callee@parrotalk.com'
-  );
+  // const [email, setEmail] = useState(
+  //   location.state?.email || 'callee@parrotalk.com'
+  // );
   const [talkId, setTalkId] = useState(null); // talkId 상태 추가
   const screenType = useRef(null);
   const [isSelectionLocked, setSelectionLocked] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
+  const [peerNickname, setPeerNickname] = useState(null);
+  const [peerProfileImage, setProfileImage] = useState(null);
 
   useEffect(() => {
-    console.log('Extracted email:', email);
+    // 초기화 시 userInfo 설정
+    if (!userInfo.nickname || !userInfo.email) {
+      setUserInfo({
+        nickname: "익명",
+        email: "callee@parrotalk.com",
+        profileImage: DefaultProfile
+      });
+    }
+  }, [userInfo]);
 
+  useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
-    console.log(queryParams);
     const extractedTalkId = queryParams.get('talkId');
     setTalkId(extractedTalkId);
     console.log('Extracted talkId:', extractedTalkId);
@@ -147,7 +157,10 @@ const CallScreen = () => {
   };
 
   const handleStartCall = async () => {
-    if (!roomName || !email || !socket) {
+    console.log(roomName)
+    console.log(userInfo.email)
+    console.log(socket);
+    if (!roomName || !userInfo.email || !socket) {
       alert('오류가 발생해서 방 생성 페이지로 돌아갑니다.');
       navigate('/call/home');
       return;
@@ -160,6 +173,18 @@ const CallScreen = () => {
       const stream = await getMedia();
       console.log('Media stream obtained:', stream);
       myStream.current = stream;
+
+      // 마지막에 들어온 사람은 이전에 들어온 사람의 이메일을 알 수 없음
+      socket.on('another_user', (users) => {
+          console.log('Other users in room:', users);
+          users.forEach(user => {
+              console.log('Nickname:', user.nickname);
+              console.log('Profile Image:', user.profileImage);
+              setPeerNickname(user.nickname);
+              setProfileImage(user.profileImage);
+          });
+      });
+    
 
       if (myVideoRef.current) {
         console.log('myStream added.');
@@ -181,7 +206,7 @@ const CallScreen = () => {
       myDataChannel.current.onmessage = handleReceiveMessage;
       console.log('DataChannel created for chat');
 
-      socket.emit('join_room', roomName, userInfo.email, screenType.current);
+      socket.emit('join_room', roomName, userInfo.email, userInfo.nickname, userInfo.profileImage, screenType.current);
     } catch (error) {
       console.error('Error during call setup:', error);
     }
@@ -262,7 +287,12 @@ const CallScreen = () => {
           Accept: 'application/json',
         },
       }
-    );
+    )
+    .then((response) => {
+      const imageUrl = response.data.profileImage === "default" ? DefaultProfile : response.data.profileImage;
+      setPeerNickname(response.data.nickname);
+      setProfileImage(imageUrl);
+    });
 
   };
 
@@ -476,9 +506,14 @@ const CallScreen = () => {
       {!isSelectionLocked ? (
         <CallSetting onConfirm={handleConfirm} />
       ) : screenType.current === 'voice' ? (
-        <CallVoiceScreen onEndCall={handleLeaveRoom} />
+        <CallVoiceScreen 
+          nickname={peerNickname}
+          profileImage={peerProfileImage} 
+          onEndCall={handleLeaveRoom} />
       ) : (
         <CallChatScreen
+          nickname={peerNickname}
+          profileImage={peerProfileImage}
           onEndCall={handleLeaveRoom}
           messages={chatMessages}
           onSendMessage={handleSendMessage}

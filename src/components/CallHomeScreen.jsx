@@ -31,6 +31,7 @@ const CallHomeScreen = () => {
       setUserInfo({
         nickname: data.nickname,
         email: data.email,
+        profileImage: data.profileImage
       });
     } catch (error) {
       console.error('Error fetching user info:', error);
@@ -104,7 +105,7 @@ const CallHomeScreen = () => {
   return (
     <div className="call-home-container">
       <div className="profile-section">
-        <img src={DefaultProfile} alt="Default Profile" className="profile-picture" />
+        <img src={userInfo.profileImage} alt="Default Profile" className="profile-picture" />
         <div className="profile-info">
           <span className="nickname">{userInfo.nickname || '익명'}</span>
           <button

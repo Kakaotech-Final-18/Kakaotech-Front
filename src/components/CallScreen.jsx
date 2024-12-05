@@ -7,6 +7,8 @@ import axios from 'axios';
 import CallSetting from './CallSetting';
 import CallChatScreen from './CallChatScreen';
 import CallVoiceScreen from './CallVoiceScreen';
+import { useUserInfo } from '../context/UserInfoContext';
+
 
 const CallScreen = () => {
   const location = useLocation();
@@ -21,6 +23,8 @@ const CallScreen = () => {
 
   const { roomName } = useParams();
   const socket = useSocket();
+
+  const { userInfo, setUserInfo } = useUserInfo();
 
   // TODO : 로그인 붙이면서 이거 고치기
   const [email, setEmail] = useState(
@@ -152,7 +156,7 @@ const CallScreen = () => {
     setSelectionLocked(true);
 
     try {
-      console.log('Joining room:', roomName, 'with email:', email);
+      console.log('Joining room:', roomName, 'with email:', userInfo.email);
       const stream = await getMedia();
       console.log('Media stream obtained:', stream);
       myStream.current = stream;
@@ -177,7 +181,7 @@ const CallScreen = () => {
       myDataChannel.current.onmessage = handleReceiveMessage;
       console.log('DataChannel created for chat');
 
-      socket.emit('join_room', roomName, email, screenType.current);
+      socket.emit('join_room', roomName, userInfo.email, screenType.current);
     } catch (error) {
       console.error('Error during call setup:', error);
     }
@@ -397,7 +401,7 @@ const CallScreen = () => {
   };
 
   const handleLeaveRoom = async () => {
-    console.log(`${email} leaves room : ${roomName}`);
+    console.log(`${userInfo.email} leaves room : ${roomName}`);
 
     if (socket && screenType.current === 'chat') {
       console.log('Ending Transcribe session for room:', roomName);

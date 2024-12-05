@@ -1,0 +1,69 @@
+/* 기본 call-control 스타일 */
+.call-control {
+  display: flex;
+  justify-content: space-between;
+  position: sticky;
+  top: calc(56px + env(safe-area-inset-top, 0px));
+  z-index: 10;
+  background-color: var(--color-container1-background);
+  border: 2px solid #7a7b2b;
+  border-radius: 24px;
+  height: 72px;
+  padding: 8px 16px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  width: calc(100% - 20px);
+}
+
+/* showEndCallButton이 false일 때 가운데 정렬 */
+.call-control.center-align {
+  justify-content: center; /* 가운데 정렬 */
+  position: static;
+
+}
+
+/* 프로필+닉네임 컨테이너 */
+.call-control-left {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* 프로필과 닉네임 간 간격 */
+}
+
+/* 프로필 사진 */
+.call-control-profile {
+  width: 56px; /* 높이에 비례하여 조정 */
+  height: 56px;
+  border-radius: 50%; /* 둥근 모양 */
+  object-fit: cover; /* 비율 유지 */
+  border: 2px solid #4f9456; /* 테두리 */
+  box-sizing: border-box; /* 테두리 포함 크기 계산 */
+}
+
+/* 닉네임 */
+.call-control-nickname {
+  font-size: 150%; /* 폰트 크기 */
+  font-weight: bold;
+  color: var(--color-text-main);
+}
+
+/* 종료 버튼 */
+.call-control-end-button {
+  width: 56px; /* 높이에 맞춰 조정 */
+  height: 56px; /* 정사각형 유지 */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.call-control-end-button img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%; /* 둥근 버튼 */
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+.call-control-end-button img:hover {
+  transform: scale(1.1); /* 버튼 호버 효과 */
+}

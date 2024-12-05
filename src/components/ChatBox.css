@@ -1,84 +1,137 @@
-#chatBox {
+.chat-box {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  max-width: 400px;
-  margin: 0 auto;
+  height: calc(100vh - 72px);
+  box-sizing: border-box;
 }
 
-#logList {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-  height: 300px;
-  overflow-y: auto;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+/* 메시지 영역 */
+.chat-messages {
+  flex: 1; /* 남은 공간을 자동으로 채움 */
+  overflow-y: auto; /* 스크롤 가능 */
   padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* 메시지 간 간격 */
+  box-sizing: border-box;
+  max-height: calc(100vh - 25vh); /* 여기 조정해서 아래 흰색 비율 조정하기 */
+  margin-top: 80px;
 }
 
-.my_message {
-  text-align: right;
-  margin: 5px 0;
+/* 개별 메시지 */
+.chat-message {
+  display: flex;
+  max-width: 100%;
 }
 
-.peer_message {
-  text-align: left;
-  margin: 5px 0;
+.chat-message.my_message {
+  justify-content: flex-end; /* 오른쪽 정렬 */
+}
+
+.chat-message.peer_message {
+  justify-content: flex-start; /* 왼쪽 정렬 */
 }
 
 .message-bubble {
   display: inline-block;
   padding: 8px 12px;
   border-radius: 15px;
-  max-width: 70%;
+  max-width: 70%; /* 최대 너비 설정 */
   font-size: 14px;
+  word-wrap: break-word; /* 긴 단어 줄바꿈 */
+  word-break: break-word; /* 단어 줄바꿈 */
+  box-sizing: border-box;
 }
 
-.my_message .message-bubble {
-  background-color: #d1e7ff; /* 자신이 보낸 메시지 */
+.chat-message.my_message .message-bubble {
+  background-color: #d1e7ff; /* 내가 보낸 메시지 */
   color: #333;
   border-bottom-right-radius: 0;
 }
 
-.peer_message .message-bubble {
-  background-color: #f1f1f1; /* 상대방이 보낸 메시지 */
+.chat-message.peer_message .message-bubble {
+  background-color: #f1f1f1; /* 상대방 메시지 */
   color: #333;
   border-bottom-left-radius: 0;
 }
 
-#recommendations button {
-  width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  display: inline-block;
-  position: relative;
-  margin: 5px 0;
-}
-#recommendationsBox {
+/* 추천 + 입력창 컨테이너 */
+.chat-input-container {
+  flex-shrink: 0; /* 높이 고정 */
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 10px;
-  margin: 10px 0;
+  padding: 10px;
+  background-color: transparent;
+  box-sizing: border-box;
 }
-  
+
+/* 추천 버튼 영역 */
+.chat-recommendations {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 추천 버튼 */
 .recommendation-button {
-  background-color: #e0f7fa;
-  color: #00695c;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background-color: #b1d3ae;
+  color: #333;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  white-space: nowrap; /* 줄바꿈 방지 */
+  overflow: hidden; /* 넘치는 텍스트 숨기기 */
+  text-overflow: ellipsis; /* ... 표시 */
+}
+
+.recommendation-button:hover {
+  background-color: #a0c9a0;
+}
+
+.recommendation-button:active {
+  background-color: #90b890;
+}
+
+/* 입력창 */
+.chat-input-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chat-input {
+  flex: 1; /* 입력창이 남은 공간 차지 */
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.chat-input:focus {
+  border-color: #4f9456;
+  outline: none;
+}
+
+.send-button {
+  background-color: #4f9456;
+  color: white;
   border: none;
   padding: 8px 12px;
   border-radius: 5px;
   font-size: 14px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease;
 }
-  
-.recommendation-button:hover {
-  background-color: #b2ebf2;
+
+.send-button:hover {
+  background-color: #3a7d47;
 }
-  
-.recommendation-button:active {
-  background-color: #80deea;
+
+.send-button:active {
+  background-color: #2e6238;
   transform: scale(0.95);
 }

@@ -150,12 +150,11 @@ wsServer.on('connection', socket => {
         sentence: combinedContent
     })
     .then(response => {
-        console.log(response);
         // summary와 todo 데이터를 클라이언트에 보냄
         const { summary, todo } = response.data;
-   
+        console.log(todo);
         //DB 저장
-        // wsServer.to(roomName).emit("ai_summary", { summary, todo });
+        socket.emit('ai_summary', todo);
     })
     .catch(error => {
         if (error.code === 'ECONNREFUSED') {
@@ -218,7 +217,34 @@ wsServer.on('connection', socket => {
   // 연결 해제 처리
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+  }); 
+  socket.on("request_tts", async (text, roomName) => {
+    try {
+      // 요청 데이터 설정
+      const requestData = {
+        text: text,
+        room_number: roomName,
+        voice_type: "male1",
+      };
+
+      // TTS 서버로 POST 요청 전송
+      const response = await axios.post(process.env.AI_TTS, requestData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      // 요청한 클라이언트에게 응답 데이터 전달
+      socket.emit("tts_response", { success: true, data: response.data["audio_base64"] });
+    } catch (error) {
+      // 에러 처리
+      console.error("TTS 요청 실패:", error.message);
+
+      // 요청한 클라이언트에게 에러 전달
+      socket.emit("tts_response", { success: false, error: error.message });
+    }
   });
+
 });
 
 const PORT = 3000;

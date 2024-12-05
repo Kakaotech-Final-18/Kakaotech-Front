@@ -113,7 +113,7 @@ const CallHomeScreen = () => {
             onClick={handleCreateRoom}
           >
             <img src={PhoneIcon} alt="Phone Icon" className="phone-icon" />
-            {createButtonText}
+            <span className="phone-text">{createButtonText}</span>
           </button>
         </div>
       </div>

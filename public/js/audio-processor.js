@@ -1,5 +1,3 @@
-import * as tf from '@tensorflow/tfjs'; // TensorFlow.js
-
 class AudioProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
@@ -19,12 +17,13 @@ class AudioProcessor extends AudioWorkletProcessor {
 
   async loadModel() {
     try {
-      // AI 모델 경로에 맞게 수정
+      // TensorFlow.js 글로벌 객체 사용
+      const tf = globalThis.tf;
       this.model = await tf.loadGraphModel('/path/to/model.json');
-      console.log('[AudioProcessor] AI Model loaded');
+      // console.log('[AudioProcessor] AI Model loaded');
       this.isModelReady = true;
     } catch (error) {
-      console.error('[AudioProcessor] Error loading AI model:', error);
+      // console.error('[AudioProcessor] Error loading AI model:', error);
     }
   }
 
@@ -44,8 +43,17 @@ class AudioProcessor extends AudioWorkletProcessor {
       // Float32 -> Int16 변환
       const int16Data = this.convertFloat32ToInt16(channelData);
 
-      // AI 모델에 데이터 전달
-      const filteredData = this.applyAIModel(int16Data);
+      let filteredData;
+      if (this.isModelReady) {
+        // AI 모델 적용
+        filteredData = this.applyAIModel(int16Data);
+      } else {
+        // AI 모델 없이 원본 데이터 사용
+        console.warn(
+          '[AudioProcessor] AI Model not ready, using raw audio data'
+        );
+        filteredData = int16Data; // 원본 데이터를 그대로 사용
+      }
 
       // 필터링된 데이터를 메인 스레드로 전송
       const audioChunk = new Uint8Array(filteredData.buffer);

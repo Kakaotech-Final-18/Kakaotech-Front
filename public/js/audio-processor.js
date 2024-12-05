@@ -39,7 +39,7 @@ class AudioProcessor extends AudioWorkletProcessor {
     const input = inputs[0];
     const channelData = input ? input[0] : null; // mono channel
 
-    if (channelData && this.isModelReady) {
+    if (channelData) {
       // Float32 -> Int16 변환
       const int16Data = this.convertFloat32ToInt16(channelData);
 

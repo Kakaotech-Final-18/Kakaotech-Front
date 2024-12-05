@@ -114,19 +114,6 @@ wsServer.on('connection', socket => {
     }
   });
 
-// 다른 사용자의 닉네임과 프로필 이미지 반환 이벤트
-socket.on('get_another_user', (roomName, callback) => {
-    if (!rooms[roomName]) {
-        return callback({ success: false, message: 'Room not found' });
-    }
-    const otherUsers = rooms[roomName].filter(user => user.id !== socket.id);
-    const response = otherUsers.map(user => ({
-        nickname: user.email.split('@')[0], // 닉네임은 이메일의 앞부분으로 예시
-        profileImage: user.profileImage,
-    }));
-    callback({ success: true, data: response });
-});
-
   const handleAudioChunk = (chunk, roomName) => {
     const audioStream = roomManager.getAudioStream(roomName);
 
@@ -167,16 +154,25 @@ socket.on('get_another_user', (roomName, callback) => {
     console.log("roomName: " + roomName);
     const combinedContent = messages.map(msg => msg.content).join(' ');
     console.log("message: " + combinedContent);
-    axios.post(process.env.AI_SUMMARY, {
+
+    // 15초 제한 타이머
+    const timeout = new Promise((resolve) => {
+        setTimeout(() => {
+            console.warn('SUMMARY : Timeout occurred. Returning empty array.');
+            resolve({ summary: "", todo: [] }); // 기본값 설정
+        }, 15000); // 15초
+    });
+
+    // 실제 요약 요청
+    const aiRequest = axios.post(process.env.AI_SUMMARY, {
         room_number: roomName,
-        sentence: combinedContent
+        sentence: combinedContent,
     })
     .then(response => {
-        // summary와 todo 데이터를 클라이언트에 보냄
+        // 성공적인 요청 처리
         const { summary, todo } = response.data;
         console.log(todo);
-        //DB 저장
-        socket.emit('ai_summary', todo);
+        return { summary, todo };
     })
     .catch(error => {
         if (error.code === 'ECONNREFUSED') {
@@ -184,8 +180,17 @@ socket.on('get_another_user', (roomName, callback) => {
         } else {
             console.error('SUMMARY : An unexpected error occurred:', error.message);
         }
-    })
+        return { summary: "", todo: [] }; // 실패 시 기본값 반환
+    });
+
+    // 타이머와 요청 중 먼저 완료된 값을 반환
+    Promise.race([timeout, aiRequest])
+        .then(({ todo }) => {
+            console.log("Final todo:", todo);
+            socket.emit('ai_summary', todo);
+        });
   }
+
 
   // 방 퇴장 로직
   socket.on('leave_room', async (data) => {
@@ -216,6 +221,18 @@ socket.on('get_another_user', (roomName, callback) => {
       }
       roomManager.removeRoom(roomName);
       delete rooms[roomName];
+    }
+  });
+
+  socket.on("get_room_users", (roomName, callback) => {
+    const room = rooms[roomName];
+    if (room) {
+      const users = room.map(user => ({
+        email: user.email,
+      }));
+      callback(users); // 클라이언트로 유저 정보 전송
+    } else {
+      callback([]); // 방이 없을 경우 빈 배열 반환
     }
   });
 

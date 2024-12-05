@@ -9,6 +9,8 @@ import CallSetting from './CallSetting';
 import CallChatScreen from './CallChatScreen';
 import CallVoiceScreen from './CallVoiceScreen';
 import { useUserInfo } from '../context/UserInfoContext';
+import { usePeer } from '../context/PeerContext';
+
 
 const CallScreen = () => {
   const location = useLocation();
@@ -25,6 +27,8 @@ const CallScreen = () => {
   const socket = useSocket();
 
   const { userInfo, setUserInfo } = useUserInfo();
+  const { peerNickname, setPeerNickname, peerProfileImage, setPeerProfileImage } = usePeer();
+
 
   // TODO : 로그인 붙이면서 이거 고치기
   // const [email, setEmail] = useState(
@@ -35,8 +39,6 @@ const CallScreen = () => {
   const [isSelectionLocked, setSelectionLocked] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
-  const [peerNickname, setPeerNickname] = useState(null);
-  const [peerProfileImage, setProfileImage] = useState(null);
 
   useEffect(() => {
     // 초기화 시 userInfo 설정
@@ -178,10 +180,8 @@ const CallScreen = () => {
       socket.on('another_user', (users) => {
           console.log('Other users in room:', users);
           users.forEach(user => {
-              console.log('Nickname:', user.nickname);
-              console.log('Profile Image:', user.profileImage);
               setPeerNickname(user.nickname);
-              setProfileImage(user.profileImage);
+              setPeerProfileImage(user.profileImage);
           });
       });
     
@@ -291,7 +291,7 @@ const CallScreen = () => {
     .then((response) => {
       const imageUrl = response.data.profileImage === "default" ? DefaultProfile : response.data.profileImage;
       setPeerNickname(response.data.nickname);
-      setProfileImage(imageUrl);
+      setPeerProfileImage(imageUrl);
     });
 
   };
@@ -404,30 +404,30 @@ const CallScreen = () => {
     console.log('User disconnected: ${socket.id}');
 
     // 각 방에서 해당 소켓 ID 제거
-    for (const roomName in rooms) {
-      const userIndex = rooms[roomName]?.findIndex(
-        user => user.id === socket.id
-      );
-      if (userIndex !== -1) {
-        const userEmail = rooms[roomName][userIndex].email;
-        rooms[roomName].splice(userIndex, 1);
-        console.log('[Room] ${userEmail} removed from room: ${roomName}');
+    // for (const roomName in rooms) {
+    //   const userIndex = rooms[roomName]?.findIndex(
+    //     user => user.id === socket.id
+    //   );
+    //   if (userIndex !== -1) {
+    //     const userEmail = rooms[roomName][userIndex].email;
+    //     rooms[roomName].splice(userIndex, 1);
+    //     console.log('[Room] ${userEmail} removed from room: ${roomName}');
 
-        // 방에 남은 유저가 없으면 방 정리
-        const userCount =
-          wsServer.sockets.adapter.rooms.get(roomName)?.size || 0;
-        if (userCount === 0) {
-          console.log('[Room] Last user left. Cleaning up room: ${roomName}');
-          transcribeService.stopTranscribe(roomName); // AWS Transcribe 및 스트림 종료
-          roomManager.removeRoom(roomName);
-          delete rooms[roomName];
-        } else {
-          socket.to(roomName).emit('peer_left', userEmail);
-          console.log(`${userEmail} has left the room: ${roomName}`);
-        }
-        break; // 한 방만 찾으면 루프 종료
-      }
-    }
+    //     // 방에 남은 유저가 없으면 방 정리
+    //     const userCount =
+    //       wsServer.sockets.adapter.rooms.get(roomName)?.size || 0;
+    //     if (userCount === 0) {
+    //       console.log('[Room] Last user left. Cleaning up room: ${roomName}');
+    //       transcribeService.stopTranscribe(roomName); // AWS Transcribe 및 스트림 종료
+    //       roomManager.removeRoom(roomName);
+    //       delete rooms[roomName];
+    //     } else {
+    //       socket.to(roomName).emit('peer_left', userEmail);
+    //       console.log(`${userEmail} has left the room: ${roomName}`);
+    //     }
+    //     break; // 한 방만 찾으면 루프 종료
+    //   }
+    // }
   };
 
   const handleLeaveRoom = async () => {
@@ -473,7 +473,7 @@ const CallScreen = () => {
       });
     }
 
-    navigate('/call/end');
+    navigate(`/call/end?roomName=${roomName}&talkId=${talkId}`);
   };
 
   const handleRoomFull = () => {

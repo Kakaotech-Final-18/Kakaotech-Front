@@ -224,18 +224,6 @@ wsServer.on('connection', socket => {
     }
   });
 
-  socket.on("get_room_users", (roomName, callback) => {
-    const room = rooms[roomName];
-    if (room) {
-      const users = room.map(user => ({
-        email: user.email,
-      }));
-      callback(users); // 클라이언트로 유저 정보 전송
-    } else {
-      callback([]); // 방이 없을 경우 빈 배열 반환
-    }
-  });
-
   socket.on('stop_transcribe', async roomName => {
     const audioStream = roomManager.getAudioStream(roomName);
     if (audioStream) {

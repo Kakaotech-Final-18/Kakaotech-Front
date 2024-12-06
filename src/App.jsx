@@ -8,6 +8,7 @@ import EndCallScreen from './components/EndCallScreen';
 import { SocketProvider } from './context/SocketContext';
 import { UserInfoProvider } from './context/UserInfoContext';
 import { PeerProvider } from './context/PeerContext';
+import MyPage from './components/MyPage';
 
 const App = () => {
   return (
@@ -21,6 +22,7 @@ const App = () => {
                 <Route path="/call/home" element={<CallHomeScreen />} />
                 <Route path="/call/:roomName" element={<CallScreen />} />
                 <Route path="/call/end" element={<EndCallScreen />} />
+                <Route path="/mypage" element={<MyPage />} />
               </Routes>
             </MainLayout>
           </Router>

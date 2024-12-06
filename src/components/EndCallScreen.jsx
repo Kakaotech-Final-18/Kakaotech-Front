@@ -11,7 +11,6 @@ const EndCallScreen = () => {
   const location = useLocation(); // URL에서 query parameter 가져오기
   const [todos, setTodos] = useState([]);
   const [checkedTodos, setCheckedTodos] = useState([]);
-  const [users, setUsers] = useState([]); // 유저 정보를 저장
   const [isLoading, setIsLoading] = useState(true);
   const socket = useSocket();
   const { peerNickname, peerProfileImage } = usePeer();
@@ -28,12 +27,6 @@ const EndCallScreen = () => {
       setTodos(todo);
       setCheckedTodos(new Array(todo.length).fill(false)); // 체크 초기화
       setIsLoading(false);
-    });
-
-    // 방에 있는 유저 정보 요청 (roomName 기반)
-    socket.emit("get_room_users", roomName, (response) => {
-      console.log("Received users:", response);
-      setUsers(response); // 서버에서 받아온 유저 목록 저장
     });
 
     return () => {
@@ -64,7 +57,6 @@ const EndCallScreen = () => {
         {
           todos: selectedTodos,
           talk: { talkId: talkId },
-          users: users.map(user => ({ email: user.email }))
         },
         {
           headers: {

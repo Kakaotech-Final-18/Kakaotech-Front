@@ -50,37 +50,64 @@ const MyPage = () => {
             <header className="profile-header">
                 <img src={profileImage} alt="Profile" className="my-profile-image" />
                 <div className="profile-info">
-                    <p className="nickname">{userInfo?.nickname || '익명'}</p>
+                    <p className="nickname">{userInfo.nickname || '익명'}</p>
                     <button className="logout-button">로그아웃</button>
                 </div>
             </header>
 
             <section className="content">
-                {roomDetails.map((detail, index) => (
-                    <div className="chat-card" key={`${detail.talkId}-${index}`}>
+                {Object.values(
+                    roomDetails.reduce((acc, detail) => {
+                        if (!acc[detail.talkId]) {
+                            acc[detail.talkId] = {
+                                receiverName: detail.receiverName,
+                                receiverProfileImage: DefaultProfile, // Placeholder image
+                                talkCreatedAt: detail.talkCreatedAt,
+                                todos: [],
+                            };
+                        }
+                        acc[detail.talkId].todos.push({
+                            todoTitle: detail.todoTitle,
+                            todoStatus: detail.todoStatus,
+                        });
+                        return acc;
+                    }, {})
+                ).map((talkDetail, index) => (
+                    <div className="chat-card" key={index}>
                         <div className="chat-header">
                             <div className="chat-profile">
-                                <img src={DefaultProfile} alt="Profile" className="profile-icon" />
-                                <p className="chat-title">{`${detail.receiverName}님과의 통화`}</p>
+                                <img
+                                    src={talkDetail.receiverProfileImage}
+                                    alt="Profile"
+                                    className="profile-icon"
+                                />
+                                <div>
+                                    <p className="chat-title">{`${talkDetail.receiverName}님과의 통화`}</p>
+                                    <span className="chat-date">
+                                        {new Date(talkDetail.talkCreatedAt).toLocaleDateString('ko-KR', {
+                                            year: 'numeric',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                        })}
+                                    </span>
+                                </div>
                             </div>
-                            <span className="chat-date">
-                                {new Date(detail.talkCreatedAt).toLocaleDateString('ko-KR', {
-                                    year: 'numeric',
-                                    month: '2-digit',
-                                    day: '2-digit',
-                                })}
-                            </span>
                             <button className="close-button">X</button>
                         </div>
                         <div className="task-list">
-                            <div className="task-item">
-                                <input type="checkbox" id={`todo-${detail.todoTitle}`} />
-                                <label htmlFor={`todo-${detail.todoTitle}`}>{detail.todoTitle}</label>
-                            </div>
+                            {talkDetail.todos.map((todo, todoIndex) => (
+                                <div className="task-item" key={todoIndex}>
+                                    <input type="checkbox" id={`todo-${todo.todoTitle}`} />
+                                    <label htmlFor={`todo-${todo.todoTitle}`}>
+                                        {`${todo.todoTitle}`}
+                                    </label>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 ))}
             </section>
+
         </div>
     );
 };

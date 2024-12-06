@@ -155,14 +155,6 @@ wsServer.on('connection', socket => {
     const combinedContent = messages.map(msg => msg.content).join(' ');
     console.log("message: " + combinedContent);
 
-    // 15초 제한 타이머
-    const timeout = new Promise((resolve) => {
-        setTimeout(() => {
-            console.warn('SUMMARY : Timeout occurred. Returning empty array.');
-            resolve({ summary: "", todo: [] }); // 기본값 설정
-        }, 15000); // 15초
-    });
-
     // 실제 요약 요청
     const aiRequest = axios.post(process.env.AI_SUMMARY, {
         room_number: roomName,
@@ -172,7 +164,7 @@ wsServer.on('connection', socket => {
         // 성공적인 요청 처리
         const { summary, todo } = response.data;
         console.log(todo);
-        return { summary, todo };
+        socket.emit('ai_summary', todo);
     })
     .catch(error => {
         if (error.code === 'ECONNREFUSED') {
@@ -180,15 +172,7 @@ wsServer.on('connection', socket => {
         } else {
             console.error('SUMMARY : An unexpected error occurred:', error.message);
         }
-        return { summary: "", todo: [] }; // 실패 시 기본값 반환
     });
-
-    // 타이머와 요청 중 먼저 완료된 값을 반환
-    Promise.race([timeout, aiRequest])
-        .then(({ todo }) => {
-            console.log("Final todo:", todo);
-            socket.emit('ai_summary', todo);
-        });
   }
 
 

@@ -2,9 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getMedia, makeConnection } from '../services/WebrtcService';
 import { useSocket } from '../context/SocketContext';
+import ChatBox from './ChatBox';
+import DefaultProfile from '../assets/default-profile.svg';
+import axios from 'axios';
 import CallSetting from './CallSetting';
 import CallChatScreen from './CallChatScreen';
 import CallVoiceScreen from './CallVoiceScreen';
+import { useUserInfo } from '../context/UserInfoContext';
+import { usePeer } from '../context/PeerContext';
+
 
 const CallScreen = () => {
   const location = useLocation();
@@ -20,17 +26,36 @@ const CallScreen = () => {
   const { roomName } = useParams();
   const socket = useSocket();
 
+  const { userInfo, setUserInfo } = useUserInfo();
+  const { peerNickname, setPeerNickname, peerProfileImage, setPeerProfileImage } = usePeer();
+
+
   // TODO : 로그인 붙이면서 이거 고치기
-  const [email, setEmail] = useState(
-    location.state?.email || 'callee@parrotalk.com'
-  );
+  // const [email, setEmail] = useState(
+  //   location.state?.email || 'callee@parrotalk.com'
+  // );
+  const [talkId, setTalkId] = useState(null); // talkId 상태 추가
   const screenType = useRef(null);
   const [isSelectionLocked, setSelectionLocked] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
 
   useEffect(() => {
-    console.log('Extracted email:', email);
+    // 초기화 시 userInfo 설정
+    if (!userInfo.nickname || !userInfo.email) {
+      setUserInfo({
+        nickname: "익명",
+        email: "callee@parrotalk.com",
+        profileImage: DefaultProfile
+      });
+    }
+  }, [userInfo]);
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const extractedTalkId = queryParams.get('talkId');
+    setTalkId(extractedTalkId);
+    console.log('Extracted talkId:', extractedTalkId);
 
     const initialize = async () => {
       if (socket && socket.connected) {
@@ -46,7 +71,7 @@ const CallScreen = () => {
     initialize();
 
     return () => {};
-  }, []);
+  }, [talkId]);
 
   const cleanupSocketEvents = socket => {
     socket.off('disconnect', () => handleDisconnect(socket));
@@ -134,7 +159,10 @@ const CallScreen = () => {
   };
 
   const handleStartCall = async () => {
-    if (!roomName || !email || !socket) {
+    console.log(roomName)
+    console.log(userInfo.email)
+    console.log(socket);
+    if (!roomName || !userInfo.email || !socket) {
       alert('오류가 발생해서 방 생성 페이지로 돌아갑니다.');
       navigate('/call/home');
       return;
@@ -143,10 +171,20 @@ const CallScreen = () => {
     setSelectionLocked(true);
 
     try {
-      console.log('Joining room:', roomName, 'with email:', email);
+      console.log('Joining room:', roomName, 'with email:', userInfo.email);
       const stream = await getMedia();
       console.log('Media stream obtained:', stream);
       myStream.current = stream;
+
+      // 마지막에 들어온 사람은 이전에 들어온 사람의 이메일을 알 수 없음
+      socket.on('another_user', (users) => {
+          console.log('Other users in room:', users);
+          users.forEach(user => {
+              setPeerNickname(user.nickname);
+              setPeerProfileImage(user.profileImage);
+          });
+      });
+    
 
       if (myVideoRef.current) {
         console.log('myStream added.');
@@ -168,7 +206,7 @@ const CallScreen = () => {
       myDataChannel.current.onmessage = handleReceiveMessage;
       console.log('DataChannel created for chat');
 
-      socket.emit('join_room', roomName, email, screenType.current);
+      socket.emit('join_room', roomName, userInfo.email, userInfo.nickname, userInfo.profileImage, screenType.current);
     } catch (error) {
       console.error('Error during call setup:', error);
     }
@@ -236,6 +274,26 @@ const CallScreen = () => {
   const handleNotificationHi = peerEmail => {
     console.log(`${peerEmail} has joined the room.`);
     alert(`${peerEmail} has joined the room.`);
+    console.log(talkId);
+    axios.post(
+      `${import.meta.env.VITE_API_BASE_URL}/api/v1/talk/peer`,
+      {
+        talkId: talkId,
+        receiverEmail: peerEmail
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          Accept: 'application/json',
+        },
+      }
+    )
+    .then((response) => {
+      const imageUrl = response.data.profileImage === "default" ? DefaultProfile : response.data.profileImage;
+      setPeerNickname(response.data.nickname);
+      setPeerProfileImage(imageUrl);
+    });
+
   };
 
   const handleOffer = async offer => {
@@ -346,34 +404,34 @@ const CallScreen = () => {
     console.log('User disconnected: ${socket.id}');
 
     // 각 방에서 해당 소켓 ID 제거
-    for (const roomName in rooms) {
-      const userIndex = rooms[roomName]?.findIndex(
-        user => user.id === socket.id
-      );
-      if (userIndex !== -1) {
-        const userEmail = rooms[roomName][userIndex].email;
-        rooms[roomName].splice(userIndex, 1);
-        console.log('[Room] ${userEmail} removed from room: ${roomName}');
+    // for (const roomName in rooms) {
+    //   const userIndex = rooms[roomName]?.findIndex(
+    //     user => user.id === socket.id
+    //   );
+    //   if (userIndex !== -1) {
+    //     const userEmail = rooms[roomName][userIndex].email;
+    //     rooms[roomName].splice(userIndex, 1);
+    //     console.log('[Room] ${userEmail} removed from room: ${roomName}');
 
-        // 방에 남은 유저가 없으면 방 정리
-        const userCount =
-          wsServer.sockets.adapter.rooms.get(roomName)?.size || 0;
-        if (userCount === 0) {
-          console.log('[Room] Last user left. Cleaning up room: ${roomName}');
-          transcribeService.stopTranscribe(roomName); // AWS Transcribe 및 스트림 종료
-          roomManager.removeRoom(roomName);
-          delete rooms[roomName];
-        } else {
-          socket.to(roomName).emit('peer_left', userEmail);
-          console.log(`${userEmail} has left the room: ${roomName}`);
-        }
-        break; // 한 방만 찾으면 루프 종료
-      }
-    }
+    //     // 방에 남은 유저가 없으면 방 정리
+    //     const userCount =
+    //       wsServer.sockets.adapter.rooms.get(roomName)?.size || 0;
+    //     if (userCount === 0) {
+    //       console.log('[Room] Last user left. Cleaning up room: ${roomName}');
+    //       transcribeService.stopTranscribe(roomName); // AWS Transcribe 및 스트림 종료
+    //       roomManager.removeRoom(roomName);
+    //       delete rooms[roomName];
+    //     } else {
+    //       socket.to(roomName).emit('peer_left', userEmail);
+    //       console.log(`${userEmail} has left the room: ${roomName}`);
+    //     }
+    //     break; // 한 방만 찾으면 루프 종료
+    //   }
+    // }
   };
 
   const handleLeaveRoom = async () => {
-    console.log(`${email} leaves room : ${roomName}`);
+    console.log(`${userInfo.email} leaves room : ${roomName}`);
 
     if (socket && screenType.current === 'chat') {
       console.log('Ending Transcribe session for room:', roomName);
@@ -415,7 +473,7 @@ const CallScreen = () => {
       });
     }
 
-    navigate('/call/end');
+    navigate(`/call/end?roomName=${roomName}&talkId=${talkId}`);
   };
 
   const handleRoomFull = () => {
@@ -448,9 +506,14 @@ const CallScreen = () => {
       {!isSelectionLocked ? (
         <CallSetting onConfirm={handleConfirm} />
       ) : screenType.current === 'voice' ? (
-        <CallVoiceScreen onEndCall={handleLeaveRoom} />
+        <CallVoiceScreen 
+          nickname={peerNickname}
+          profileImage={peerProfileImage} 
+          onEndCall={handleLeaveRoom} />
       ) : (
         <CallChatScreen
+          nickname={peerNickname}
+          profileImage={peerProfileImage}
           onEndCall={handleLeaveRoom}
           messages={chatMessages}
           onSendMessage={handleSendMessage}

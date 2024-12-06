@@ -6,6 +6,7 @@ export const UserInfoProvider = ({ children }) => {
   const [userInfo, setUserInfo] = useState({
     nickname: '',
     email: '',
+    profileImage: '',
   });
 
   return (

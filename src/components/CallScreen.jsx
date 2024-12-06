@@ -11,7 +11,6 @@ import CallVoiceScreen from './CallVoiceScreen';
 import { useUserInfo } from '../context/UserInfoContext';
 import { usePeer } from '../context/PeerContext';
 
-
 const CallScreen = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -27,8 +26,12 @@ const CallScreen = () => {
   const socket = useSocket();
 
   const { userInfo, setUserInfo } = useUserInfo();
-  const { peerNickname, setPeerNickname, peerProfileImage, setPeerProfileImage } = usePeer();
-
+  const {
+    peerNickname,
+    setPeerNickname,
+    peerProfileImage,
+    setPeerProfileImage,
+  } = usePeer();
 
   // TODO : 로그인 붙이면서 이거 고치기
   // const [email, setEmail] = useState(
@@ -44,9 +47,9 @@ const CallScreen = () => {
     // 초기화 시 userInfo 설정
     if (!userInfo.nickname || !userInfo.email) {
       setUserInfo({
-        nickname: "익명",
-        email: "callee@parrotalk.com",
-        profileImage: DefaultProfile
+        nickname: '익명',
+        email: 'callee@parrotalk.com',
+        profileImage: DefaultProfile,
       });
     }
   }, [userInfo]);
@@ -87,7 +90,7 @@ const CallScreen = () => {
     socket.off('transcript', handleTranscript);
     socket.off('stop_audio_chunk', handleStopAudioChunk);
     socket.off('recommendations', handleRecommendations);
-    socket.off("tts_response", handleTTS);
+    socket.off('tts_response', handleTTS);
   };
 
   const registerSocketEvents = socket => {
@@ -105,28 +108,29 @@ const CallScreen = () => {
     socket.on('transcript', handleTranscript);
     socket.on('stop_audio_chunk', handleStopAudioChunk);
     socket.on('recommendations', handleRecommendations);
-    socket.on("tts_response", handleTTS);
+    socket.on('tts_response', handleTTS);
     console.log('Socket events registered.');
   };
 
   const handleTTS = audioBase64 => {
-  
     // Base64 디코딩 후 ArrayBuffer로 변환 및 오디오 재생
     const playAudio = async () => {
       try {
         const audioData = atob(audioBase64['data']);
-        const arrayBuffer = new Uint8Array(audioData.length).map((_, i) => audioData.charCodeAt(i)).buffer;
-  
+        const arrayBuffer = new Uint8Array(audioData.length).map((_, i) =>
+          audioData.charCodeAt(i)
+        ).buffer;
+
         const audioContext = new window.AudioContext();
         const decodedData = await audioContext.decodeAudioData(arrayBuffer);
-  
+
         const source = audioContext.createBufferSource();
         source.buffer = decodedData;
-  
+
         // 오디오 재생
         source.connect(audioContext.destination);
         source.start(0);
-  
+
         // 재생 완료 후 리소스 정리
         source.onended = () => {
           source.disconnect();
@@ -137,11 +141,10 @@ const CallScreen = () => {
         console.error('Error playing TTS audio:', error);
       }
     };
-  
+
     // 오디오 재생 호출
     playAudio();
   };
-  
 
   const handleRecommendations = data => {
     console.log('Received recommendations:', data);
@@ -159,8 +162,8 @@ const CallScreen = () => {
   };
 
   const handleStartCall = async () => {
-    console.log(roomName)
-    console.log(userInfo.email)
+    console.log(roomName);
+    console.log(userInfo.email);
     console.log(socket);
     if (!roomName || !userInfo.email || !socket) {
       alert('오류가 발생해서 방 생성 페이지로 돌아갑니다.');
@@ -177,14 +180,13 @@ const CallScreen = () => {
       myStream.current = stream;
 
       // 마지막에 들어온 사람은 이전에 들어온 사람의 이메일을 알 수 없음
-      socket.on('another_user', (users) => {
-          console.log('Other users in room:', users);
-          users.forEach(user => {
-              setPeerNickname(user.nickname);
-              setPeerProfileImage(user.profileImage);
-          });
+      socket.on('another_user', users => {
+        console.log('Other users in room:', users);
+        users.forEach(user => {
+          setPeerNickname(user.nickname);
+          setPeerProfileImage(user.profileImage);
+        });
       });
-    
 
       if (myVideoRef.current) {
         console.log('myStream added.');
@@ -206,7 +208,14 @@ const CallScreen = () => {
       myDataChannel.current.onmessage = handleReceiveMessage;
       console.log('DataChannel created for chat');
 
-      socket.emit('join_room', roomName, userInfo.email, userInfo.nickname, userInfo.profileImage, screenType.current);
+      socket.emit(
+        'join_room',
+        roomName,
+        userInfo.email,
+        userInfo.nickname,
+        userInfo.profileImage,
+        screenType.current
+      );
     } catch (error) {
       console.error('Error during call setup:', error);
     }
@@ -256,7 +265,7 @@ const CallScreen = () => {
       ...prev,
       { type: 'peer_message', content: event.data },
     ]);
-    socket.emit("request_tts", event.data, roomName);
+    socket.emit('request_tts', event.data, roomName);
   };
 
   const handleSendMessage = message => {
@@ -275,25 +284,28 @@ const CallScreen = () => {
     console.log(`${peerEmail} has joined the room.`);
     alert(`${peerEmail} has joined the room.`);
     console.log(talkId);
-    axios.post(
-      `${import.meta.env.VITE_API_BASE_URL}/api/v1/talk/peer`,
-      {
-        talkId: talkId,
-        receiverEmail: peerEmail
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-          Accept: 'application/json',
+    axios
+      .post(
+        `${import.meta.env.VITE_API_BASE_URL}/api/v1/talk/peer`,
+        {
+          talkId: talkId,
+          receiverEmail: peerEmail,
         },
-      }
-    )
-    .then((response) => {
-      const imageUrl = response.data.profileImage === "default" ? DefaultProfile : response.data.profileImage;
-      setPeerNickname(response.data.nickname);
-      setPeerProfileImage(imageUrl);
-    });
-
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+            Accept: 'application/json',
+          },
+        }
+      )
+      .then(response => {
+        const imageUrl =
+          response.data.profileImage === 'default'
+            ? DefaultProfile
+            : response.data.profileImage;
+        setPeerNickname(response.data.nickname);
+        setPeerProfileImage(imageUrl);
+      });
   };
 
   const handleOffer = async offer => {
@@ -404,30 +416,30 @@ const CallScreen = () => {
     console.log('User disconnected: ${socket.id}');
 
     // 각 방에서 해당 소켓 ID 제거
-    // for (const roomName in rooms) {
-    //   const userIndex = rooms[roomName]?.findIndex(
-    //     user => user.id === socket.id
-    //   );
-    //   if (userIndex !== -1) {
-    //     const userEmail = rooms[roomName][userIndex].email;
-    //     rooms[roomName].splice(userIndex, 1);
-    //     console.log('[Room] ${userEmail} removed from room: ${roomName}');
+    for (const roomName in rooms) {
+      const userIndex = rooms[roomName]?.findIndex(
+        user => user.id === socket.id
+      );
+      if (userIndex !== -1) {
+        const userEmail = rooms[roomName][userIndex].email;
+        rooms[roomName].splice(userIndex, 1);
+        console.log('[Room] ${userEmail} removed from room: ${roomName}');
 
-    //     // 방에 남은 유저가 없으면 방 정리
-    //     const userCount =
-    //       wsServer.sockets.adapter.rooms.get(roomName)?.size || 0;
-    //     if (userCount === 0) {
-    //       console.log('[Room] Last user left. Cleaning up room: ${roomName}');
-    //       transcribeService.stopTranscribe(roomName); // AWS Transcribe 및 스트림 종료
-    //       roomManager.removeRoom(roomName);
-    //       delete rooms[roomName];
-    //     } else {
-    //       socket.to(roomName).emit('peer_left', userEmail);
-    //       console.log(`${userEmail} has left the room: ${roomName}`);
-    //     }
-    //     break; // 한 방만 찾으면 루프 종료
-    //   }
-    // }
+        // 방에 남은 유저가 없으면 방 정리
+        const userCount =
+          wsServer.sockets.adapter.rooms.get(roomName)?.size || 0;
+        if (userCount === 0) {
+          console.log('[Room] Last user left. Cleaning up room: ${roomName}');
+          transcribeService.stopTranscribe(roomName); // AWS Transcribe 및 스트림 종료
+          roomManager.removeRoom(roomName);
+          delete rooms[roomName];
+        } else {
+          socket.to(roomName).emit('peer_left', userEmail);
+          console.log(`${userEmail} has left the room: ${roomName}`);
+        }
+        break; // 한 방만 찾으면 루프 종료
+      }
+    }
   };
 
   const handleLeaveRoom = async () => {
@@ -506,10 +518,11 @@ const CallScreen = () => {
       {!isSelectionLocked ? (
         <CallSetting onConfirm={handleConfirm} />
       ) : screenType.current === 'voice' ? (
-        <CallVoiceScreen 
+        <CallVoiceScreen
           nickname={peerNickname}
-          profileImage={peerProfileImage} 
-          onEndCall={handleLeaveRoom} />
+          profileImage={peerProfileImage}
+          onEndCall={handleLeaveRoom}
+        />
       ) : (
         <CallChatScreen
           nickname={peerNickname}

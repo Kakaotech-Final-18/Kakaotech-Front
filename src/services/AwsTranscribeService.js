@@ -146,31 +146,69 @@ class AwsTranscribeService {
     const abortController = this.roomManager.getAbortController(roomName);
     const stream = this.roomManager.getAudioStream(roomName);
 
-    if (abortController && stream && !stream.destroyed) {
-      console.log(`[Transcribe] Manual stop request for room: ${roomName}`);
-      this.roomManager.deactivateSession(roomName);
-      try {
-        abortController.abort(); // AWS 작업 중단
-      } catch (error) {
-        console.warn(`[Transcribe] Error aborting: ${error.message}`);
-      }
+    try {
+      if (abortController && stream && !stream.destroyed) {
+        console.log(
+          `[Transcribe] Initiating stop sequence for room: ${roomName}`
+        );
 
-      console.log(
-        `[Transcribe] Waiting 250ms to ensure all chunks are processed...`
+        // 1. Transcribe 중단
+        console.log(
+          `[Transcribe] Aborting Transcribe session for room: ${roomName}`
+        );
+        await this.abortTranscribe(abortController);
+
+        // 2. 스트림 종료
+        console.log(`[Transcribe] Ending audio stream for room: ${roomName}`);
+        await this.endAudioStream(stream);
+
+        // 3. RoomManager에서 세션 정리
+        console.log(
+          `[Transcribe] Cleaning up room manager for room: ${roomName}`
+        );
+        this.roomManager.removeRoom(roomName);
+        this.roomManager.clearStopping(roomName);
+
+        console.log(`[Transcribe] Successfully stopped for room: ${roomName}`);
+      } else {
+        console.warn(
+          `[Transcribe] No active stream or controller found for room: ${roomName}`
+        );
+        this.roomManager.clearStopping(roomName);
+      }
+    } catch (error) {
+      console.error(
+        `[Transcribe] Error stopping session for room ${roomName}: ${error.message}`
       );
-      setTimeout(() => {
-        stream.end(() => {
-          console.log(
-            `[Transcribe] Audio stream fully ended for room: ${roomName}`
-          );
-          this.roomManager.removeRoom(roomName);
-          this.roomManager.clearStopping(roomName);
-        });
-      }, chunkInterval * 2);
-    } else {
-      console.warn(`[Transcribe] No active stream found for room: ${roomName}`);
       this.roomManager.clearStopping(roomName);
     }
+  }
+
+  // Helper 함수: AbortController 처리
+  async abortTranscribe(abortController) {
+    return new Promise((resolve, reject) => {
+      try {
+        abortController.abort(); // Abort 신호 전송
+        resolve(); // 성공적으로 중단
+      } catch (error) {
+        reject(error); // 에러 발생 시 거부
+      }
+    });
+  }
+
+  // Helper 함수: 스트림 종료 처리
+  async endAudioStream(stream) {
+    return new Promise((resolve, reject) => {
+      try {
+        stream.end(() => {
+          console.log(`[Stream] Audio stream ended successfully.`);
+          resolve();
+        });
+      } catch (error) {
+        console.error(`[Stream] Error ending stream: ${error.message}`);
+        reject(error);
+      }
+    });
   }
 }
 

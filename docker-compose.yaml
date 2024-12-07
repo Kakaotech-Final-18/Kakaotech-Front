@@ -1,55 +1,67 @@
-version: '3.9'
-
 services:
+  traefik:
+    image: traefik:v2.5
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8081:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - app-network
+
   frontend:
     build: 
       context: ${FRONTEND_PATH}
-      dockerfile: Dockerfile.test
+      args:
+        - NODE_ENV=development
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`test.ptks.link`)"
       - "traefik.http.services.frontend.loadbalancer.server.port=3000"
-    networks:
-      - app-network
-    env_file:
-      - .env.test
-
-  backend:
-    build:
-      context: ${BACKEND_PATH}
     ports:
       - "3000:3000"
     networks:
       - app-network
-    env_file: 
-      - .env.test
     environment:
-      - NGROK_URL=https://test.ptks.link
-      - REDIRECT_URL=https://auth-test.ptks.link/login/oauth2/code/kakao
+      - VITE_SOCKET_URL=http://test.ptks.link
+      - VITE_API_BASE_URL=http://auth-test.ptks.link/
+      - AI_RECOMMENDATIONS=http://ai-test.ptks.link/recommendations
+      - AI_SUMMARY=http://ai-test.ptks.link/summary
+
+  backend:
+    build:
+      context: ${BACKEND_PATH}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=Host(`auth-test.ptks.link`)"
+      - "traefik.http.services.auth.loadbalancer.server.port=8080"
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    volumes:
+      - /tmp:/tmp
+    environment:
+      - NGROK_URL=http://test.ptks.link
+      - REDIRECT_URL=http://auth-test.ptks.link/login/oauth2/code/kakao
+      - TEMPO_URL=http://tempo:4317
 
   ai:
     build:
       context: ${AI_PATH}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ai.rule=Host(`ai-test.ptks.link`)"
+      - "traefik.http.services.ai.loadbalancer.server.port=8000"
     ports:
       - "8000:8000"
     networks:
       - app-network
-    env_file:
-      - .env.test
-
-  ngrok:
-    image: ngrok/ngrok:latest
-    ports:
-      - "4040:4040"
-    command:
-      - "http"
-      - "frontend:80"
-    depends_on:
-      - frontend
-    networks:
-      - app-network
-    environment:
-      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
 
 networks:
   app-network:

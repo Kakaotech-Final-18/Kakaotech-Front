@@ -1,0 +1,20 @@
+.waiting-indicator {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #555;
+  background-color: transparent;
+  padding: 20px 40px;
+  border-radius: 12px;
+  animation: fadeInOut 2s infinite;
+}
+
+@keyframes fadeInOut {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

@@ -1,6 +1,7 @@
 import React from 'react';
 import CallControl from './CallControl';
 import ChatBox from './ChatBox';
+import CallWaitingIndicator from './CallWaitingIndicator';
 import './CallChatScreen.css';
 
 const CallChatScreen = ({
@@ -12,15 +13,27 @@ const CallChatScreen = ({
   recommendations,
   clearRecommendations,
 }) => {
+  const isWaiting = !nickname;
+
   return (
     <div className="call-chat-screen">
-      <CallControl nickname={nickname} profileImage={profileImage} onEndCall={onEndCall} />
-      <ChatBox
-        messages={messages}
-        onSendMessage={onSendMessage}
-        recommendations={recommendations}
-        clearRecommendations={clearRecommendations}
-      />
+      {!isWaiting && (
+        <CallControl
+          nickname={nickname}
+          profileImage={profileImage}
+          onEndCall={onEndCall}
+        />
+      )}
+      {isWaiting ? (
+        <CallWaitingIndicator message="상대방을 기다리는 중" animation={true} />
+      ) : (
+        <ChatBox
+          messages={messages}
+          onSendMessage={onSendMessage}
+          recommendations={recommendations}
+          clearRecommendations={clearRecommendations}
+        />
+      )}
     </div>
   );
 };

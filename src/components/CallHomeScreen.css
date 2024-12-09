@@ -17,6 +17,7 @@
   max-width: 480px; /* 모바일 기준 */
   padding: var(--spacing);
   margin-bottom: 120px;
+  justify-content: center;
 }
 
 /* 프로필 섹션 */

@@ -2,29 +2,31 @@ services:
   traefik:
     image: traefik:v2.5
     command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
+      - '--api.insecure=true'
+      - '--providers.docker=true'
+      - '--providers.docker.exposedbydefault=false'
+      - '--entrypoints.web.address=:80'
     ports:
-      - "80:80"
-      - "8081:8080"  # Traefik dashboard
+      - '80:80'
+      - '8081:8080' # Traefik dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - app-network
 
   frontend:
-    build: 
+    build:
       context: ${FRONTEND_PATH}
       args:
         - NODE_ENV=development
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`test.ptks.link`)"
-      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.frontend.rule=Host(`test.ptks.link`)'
+      - 'traefik.http.services.frontend.loadbalancer.server.port=3000'
+      - 'traefik.http.middlewares.websocket.headers.customrequestheaders.Upgrade=websocket'
+      - 'traefik.http.middlewares.websocket.headers.customrequestheaders.Connection=Upgrade'
     ports:
-      - "3000:3000"
+      - '3000:3000'
     networks:
       - app-network
     environment:
@@ -37,11 +39,11 @@ services:
     build:
       context: ${BACKEND_PATH}
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.auth.rule=Host(`auth-test.ptks.link`)"
-      - "traefik.http.services.auth.loadbalancer.server.port=8080"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.auth.rule=Host(`auth-test.ptks.link`)'
+      - 'traefik.http.services.auth.loadbalancer.server.port=8080'
     ports:
-      - "8080:8080"
+      - '8080:8080'
     networks:
       - app-network
     volumes:
@@ -55,11 +57,11 @@ services:
     build:
       context: ${AI_PATH}
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.ai.rule=Host(`ai-test.ptks.link`)"
-      - "traefik.http.services.ai.loadbalancer.server.port=8000"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.ai.rule=Host(`ai-test.ptks.link`)'
+      - 'traefik.http.services.ai.loadbalancer.server.port=8000'
     ports:
-      - "8000:8000"
+      - '8000:8000'
     networks:
       - app-network
 

@@ -234,7 +234,7 @@ const CallScreen = () => {
   };
 
   const handleRoomNotFound = () => {
-    alert('Room not found!');
+    alert('해당 방이 존재하지 않습니다. 통화 시작 페이지로 돌아갑니다.');
     navigate('/call/home');
   };
 
@@ -519,7 +519,7 @@ const CallScreen = () => {
   };
 
   const handleRoomFull = () => {
-    alert('Room is already full!');
+    alert('방이 이미 꽉 찼습니다.');
   };
 
   const handlePeerLeft = async peerEmail => {

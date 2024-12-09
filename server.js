@@ -199,10 +199,15 @@ wsServer.on('connection', socket => {
       });
   }
 
+  
+
   // 방 퇴장 로직
   socket.on('leave_room', async data => {
     const { roomName, chatMessages } = data;
-    requestAISummary(roomName, chatMessages);
+    if (!rooms[`${roomName}_chatMessages`]) {
+      rooms[`${roomName}_chatMessages`] = chatMessages;
+    }
+    requestAISummary(roomName, rooms[`${roomName}_chatMessages`]);
 
     socket.off('audio_chunk', handleAudioChunk);
     console.log(`[Audio] audio_chunk listener removed for room: ${roomName}`);

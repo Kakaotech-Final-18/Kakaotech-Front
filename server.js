@@ -42,7 +42,7 @@ const wsServer = new Server(httpServer, {
     credentials: true,
   },
 });
-console.log('env debug Socket URL:', socketURL);
+console.log('env debug Socket URL:', process.env.VITE_SOCKET_URL);
 
 const rooms = {}; // 방 정보를 저장
 

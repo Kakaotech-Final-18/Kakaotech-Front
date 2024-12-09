@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getMedia, makeConnection } from '../services/WebrtcService';
 import { useSocket } from '../context/SocketContext';
-import ChatBox from './ChatBox';
 import DefaultProfile from '../assets/default-profile.svg';
 import axios from 'axios';
 import CallSetting from './CallSetting';
@@ -10,6 +9,7 @@ import CallChatScreen from './CallChatScreen';
 import CallVoiceScreen from './CallVoiceScreen';
 import { useUserInfo } from '../context/UserInfoContext';
 import { usePeer } from '../context/PeerContext';
+import './CallScreen.css';
 
 const CallScreen = () => {
   const location = useLocation();

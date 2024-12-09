@@ -10,13 +10,17 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       react(),
       sentryVitePlugin({
-        authToken: process.env.SENTRY_AUTH_TOKEN,
+        authToken: env.SENTRY_AUTH_TOKEN,
         org: "parrotalk",
         project: "javascript-react",
+        release: env.VITE_RELEASE || "default-release",
+        sourcemaps: {
+          assets: "./dist/**",
+        },
       }),
     ],
     build: {
-      sourcemap: false, // 에러위치 잡기, 빌드시 꺼둠
+      sourcemap: true, // 에러위치 잡기, 빌드시 꺼둠
     },
     server: {
       proxy: {

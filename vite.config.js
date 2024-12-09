@@ -1,6 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
-import { sentryVitePlugin } from "@sentry/vite-plugin";
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 
 export default defineConfig(({ command, mode }) => {
   // loadEnv를 사용하여 환경변수 불러오기
@@ -11,8 +11,8 @@ export default defineConfig(({ command, mode }) => {
       react(),
       sentryVitePlugin({
         authToken: process.env.SENTRY_AUTH_TOKEN,
-        org: "parrotalk",
-        project: "javascript-react",
+        org: 'parrotalk',
+        project: 'javascript-react',
       }),
     ],
     build: {
@@ -23,6 +23,8 @@ export default defineConfig(({ command, mode }) => {
         '/socket.io': {
           target: env.VITE_SOCKET_URL || 'http://localhost:3000',
           ws: true,
+          changeOrigin: true, // 헤더 수정 허용
+          rewrite: path => path.replace(/^\/socket.io/, '/socket.io'),
         },
       },
     },

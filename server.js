@@ -38,10 +38,11 @@ const httpServer = http.createServer(app);
 const wsServer = new Server(httpServer, {
   cors: {
     origin: process.env.VITE_SOCKET_URL || 'http://localhost:3000', // Vite 개발 서버 주소
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
   },
 });
+console.log('env debug Socket URL:', socketURL);
 
 const rooms = {}; // 방 정보를 저장
 

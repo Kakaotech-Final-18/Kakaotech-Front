@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DefaultProfile from '../assets/default-profile.svg';
 import EndCallIcon from '../assets/decline-button.svg';
+import CallWaitingIndicator from './CallWaitingIndicator';
 import './CallVoiceScreen.css';
 
 const CallVoiceScreen = ({ nickname, profileImage, onEndCall }) => {
@@ -49,9 +50,7 @@ const CallVoiceScreen = ({ nickname, profileImage, onEndCall }) => {
           </div>
         </div>
       ) : (
-        <div className="call-voice-waiting">
-          <p>대기중...</p>
-        </div>
+        <CallWaitingIndicator message="상대방을 기다리는 중" animation="true" />
       )}
       {/* 통화 종료 버튼 */}
       <button className="end-call-button" onClick={onEndCall}>

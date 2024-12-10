@@ -15,41 +15,27 @@
   width: calc(100% - 20px);
 }
 
-.call-control-waiting {
-  font-size: 1.5rem; /* 글자 크기 설정 */
-  font-weight: bold; /* 글자 굵게 */
-  color: #555; /* 글자 색 */
-  text-align: center; /* 가운데 정렬 */
-  margin: auto; /* 부모 요소 안에서 중앙 배치 */
-  display: flex; /* 플렉스 박스 사용 */
-  justify-content: center; /* 가로 가운데 정렬 */
-  align-items: center; /* 세로 가운데 정렬 */
-  height: 100%; /* 부모 요소 높이에 맞춤 */
-}
-
-
 /* showEndCallButton이 false일 때 가운데 정렬 */
 .call-control.center-align {
-  justify-content: center; /* 가운데 정렬 */
+  justify-content: center;
   position: static;
-
 }
 
 /* 프로필+닉네임 컨테이너 */
 .call-control-left {
   display: flex;
   align-items: center;
-  gap: 12px; /* 프로필과 닉네임 간 간격 */
+  gap: 12px;
 }
 
 /* 프로필 사진 */
 .call-control-profile {
   width: 56px; /* 높이에 비례하여 조정 */
   height: 56px;
-  border-radius: 50%; /* 둥근 모양 */
-  object-fit: cover; /* 비율 유지 */
-  border: 2px solid #4f9456; /* 테두리 */
-  box-sizing: border-box; /* 테두리 포함 크기 계산 */
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #4f9456;
+  box-sizing: border-box;
 }
 
 /* 닉네임 */

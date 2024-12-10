@@ -54,3 +54,7 @@
 .modal-close-button:focus {
   outline: none;
 }
+
+.modal-close-button:active {
+  transform: none; /* :active 상태에서도 위치가 변경되지 않도록 설정 */
+}

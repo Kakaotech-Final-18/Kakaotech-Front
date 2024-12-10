@@ -84,6 +84,19 @@ button {
   transition: background-color 0.3s ease;
 }
 
-button:hover {
-  background-color: rgba(75, 140, 90, 0.8);
+/* 클릭 시 효과 */
+button:active {
+  transform: scale(0.98); /* 약간 눌리는 효과 */
+  transition: transform 0.1s ease; /* 눌림 효과를 빠르게 처리 */
+}
+
+/* 포커스 시 효과 */
+button:focus {
+  outline-offset: 2px;
+  box-shadow: 0 0 4px 2px rgba(75, 140, 90, 0.8); /* 외곽선 대신 부드러운 그림자 추가 */
+}
+
+/* 버튼 클릭 해제 시 원래 상태로 복구 */
+button:not(:active):not(:hover) {
+  transform: scale(1); /* 크기 복구 */
 }

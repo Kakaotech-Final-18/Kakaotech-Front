@@ -9,6 +9,7 @@ import CallChatScreen from './CallChatScreen';
 import CallVoiceScreen from './CallVoiceScreen';
 import { useUserInfo } from '../context/UserInfoContext';
 import { usePeer } from '../context/PeerContext';
+import Modal from './common/Modal';
 import './CallScreen.css';
 
 const CallScreen = () => {
@@ -46,6 +47,25 @@ const CallScreen = () => {
 
   const [chatMessages, setChatMessages] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalCallback, setModalCallback] = useState(null);
+
+  const showModal = (message, callback) => {
+    setModalMessage(message);
+    setModalCallback(() => callback);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    if (modalCallback) {
+      modalCallback(); // 모달 닫힐 때 콜백 실행
+      setModalCallback(null); // 콜백 초기화
+    }
+  };
+
   useEffect(() => {
     const storedUserInfo = localStorage.getItem('userInfo');
 
@@ -178,7 +198,7 @@ const CallScreen = () => {
     console.log(userInfo.email);
     console.log(socket);
     if (!roomName || !userInfo.email || !socket) {
-      alert('오류가 발생해서 방 생성 페이지로 돌아갑니다.');
+      showModal('오류가 발생해서 방 생성 페이지로 돌아갑니다.');
       navigate('/call/home');
       return;
     }
@@ -234,8 +254,12 @@ const CallScreen = () => {
   };
 
   const handleRoomNotFound = () => {
-    alert('해당 방이 존재하지 않습니다. 통화 시작 페이지로 돌아갑니다.');
-    navigate('/call/home');
+    showModal(
+      '해당 방이 존재하지 않습니다. 통화 시작 페이지로 돌아갑니다.',
+      () => {
+        navigate('/call/home');
+      }
+    );
   };
 
   const handleWelcomeSelf = async () => {
@@ -263,7 +287,9 @@ const CallScreen = () => {
   };
 
   const handleWelcome = () => {
-    console.log('Peer joined the room:', roomName);
+    showModal('상대방이 입장했습니다.', () => {
+      console.log('Peer joined the room:', roomName);
+    });
     myPeerConnection.current.ondatachannel = event => {
       myDataChannel.current = event.channel;
       myDataChannel.current.onmessage = handleReceiveMessage;
@@ -519,20 +545,29 @@ const CallScreen = () => {
   };
 
   const handleRoomFull = () => {
-    alert('방이 이미 꽉 찼습니다.');
+    showModal('방이 이미 꽉 찼습니다.', () => {
+      console.log('Room is full.');
+    });
   };
 
   const handlePeerLeft = async peerEmail => {
     console.log(`${peerEmail} has left the room.`);
-    alert('상대방이 통화를 종료했습니다. 종료 화면으로 이동합니다.');
+    showModal(
+      <>
+        상대방이 통화를 종료했습니다.
+        <br />
+        종료 화면으로 이동합니다.
+      </>,
+      async () => {
+        // AudioChunk Listener 제거 및 AudioProcessor 정리
+        if (screenType.current === 'chat') {
+          console.log('Stopping Audio Processor due to peer leave...');
+          await handleStopAudioChunk(roomName);
+        }
 
-    // AudioChunk Listener 제거 및 AudioProcessor 정리
-    if (screenType.current === 'chat') {
-      console.log('Stopping Audio Processor due to peer leave...');
-      await handleStopAudioChunk(roomName);
-    }
-
-    await handleLeaveRoom(); // 종료 로직 비동기 처리
+        await handleLeaveRoom();
+      }
+    );
   };
 
   // ChatBox에 Transcribe 결과를 표시하는 핸들러
@@ -548,6 +583,7 @@ const CallScreen = () => {
     <div id="call">
       <video ref={myVideoRef} autoPlay playsInline width="0" height="0" muted />
       <video ref={peerVideoRef} autoPlay playsInline width="0" height="0" />
+      <Modal isOpen={modalOpen} onClose={closeModal} message={modalMessage} />
       {!isSelectionLocked ? (
         <CallSetting onConfirm={handleConfirm} />
       ) : screenType.current === 'voice' ? (

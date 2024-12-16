@@ -2,7 +2,8 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Header.css';
 import Logo from './Logo';
-import { useUserInfo } from '../../context/UserInfoContext'; // UserInfoContext 사용
+import { useUserInfo } from '../../context/UserInfoContext';
+import DefaultProfile from '../assets/default-profile.svg';
 
 const Header = () => {
   const location = useLocation();
@@ -34,7 +35,7 @@ const Header = () => {
         <button className="header-button" onClick={handleButtonClick}>
           {localStorage.getItem('accessToken') ? (
             <img
-              src={userInfo.profileImage || '/default-profile.png'} // profileImage 사용, 기본 이미지 경로 추가
+              src={userInfo.profileImage || DefaultProfile} // profileImage 사용, 기본 이미지 경로 추가
               alt="Profile"
               className="profile-image"
             />

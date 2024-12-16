@@ -15,9 +15,8 @@ const CallHomeScreen = () => {
   const socket = useSocket();
   const { userInfo, setUserInfo } = useUserInfo();
 
-  const fetchUserInfo = async (accessToken) => {
+  const fetchUserInfo = async accessToken => {
     try {
-     
       const response = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/api/v1/user/info`,
         {
@@ -31,10 +30,9 @@ const CallHomeScreen = () => {
       setUserInfo({
         nickname: data.nickname,
         email: data.email,
-        profileImage: data.profileImage
+        profileImage: data.profileImage,
       });
       localStorage.setItem('userInfo', JSON.stringify(data));
-      
     } catch (error) {
       console.error('Error fetching user info:', error);
     }
@@ -50,7 +48,10 @@ const CallHomeScreen = () => {
         }
       );
 
-      const accessToken = response.headers['authorization']?.replace('Bearer ', '');
+      const accessToken = response.headers['authorization']?.replace(
+        'Bearer ',
+        ''
+      );
       if (accessToken) {
         localStorage.setItem('accessToken', accessToken);
         console.log('Access Token 저장 완료:', accessToken);
@@ -66,7 +67,7 @@ const CallHomeScreen = () => {
   }, []);
 
   const handleCreateRoom = () => {
-    socket.emit('create_room', (roomName) => {
+    socket.emit('create_room', roomName => {
       const link = `${window.location.origin}/call/${roomName}`;
       setRoomLink(link);
       console.log('Room created with link:', link);
@@ -78,26 +79,27 @@ const CallHomeScreen = () => {
     if (roomLink) {
       const roomName = roomLink.split('/').pop();
       const email = userInfo.email;
-      
+
       try {
-        axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/api/v1/talk/create`,
-          {
-            roomName: roomName
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-              Accept: 'application/json',
+        axios
+          .post(
+            `${import.meta.env.VITE_API_BASE_URL}/api/v1/talk/create`,
+            {
+              roomName: roomName,
             },
-          }
-        )
-        .then((response) => {
-          console.log(response);
-          navigate(`/call/${roomName}`, {
-            state: { talkId: response.data },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+                Accept: 'application/json',
+              },
+            }
+          )
+          .then(response => {
+            console.log(response);
+            navigate(`/call/${roomName}`, {
+              state: { talkId: response.data },
+            });
           });
-        });
       } catch (error) {
         console.error('Error creating room in DB:', error);
       }
@@ -105,10 +107,18 @@ const CallHomeScreen = () => {
   };
 
   return (
-    <div className='call-home-view'>
+    <div className="call-home-view">
       <div className="call-home-container">
         <div className="profile-section">
-          <img src={userInfo.profileImage} alt="Default Profile" className="profile-picture" />
+          <img
+            src={userInfo.profileImage}
+            alt="Default Profile"
+            className="profile-picture"
+            onError={e => {
+              e.target.onerror = null; // 무한 루프 방지
+              e.target.src = DefaultProfile; // 기본 이미지로 대체
+            }}
+          />
           <div className="profile-info">
             <span className="nickname">{userInfo.nickname || '익명'}</span>
             <button

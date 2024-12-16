@@ -11,15 +11,15 @@ const Login = () => {
   };
 
   // 리디렉션 후 Access Token 처리
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const accessToken = params.get('accessToken');
+  // useEffect(() => {
+  //   const params = new URLSearchParams(window.location.search);
+  //   const accessToken = params.get('accessToken');
 
-    if (accessToken) {
-      localStorage.setItem('Authorization', `Bearer ${accessToken}`);
-      console.log('Access Token 저장:', accessToken);
-    }
-  }, []);
+  //   if (accessToken) {
+  //     localStorage.setItem('Authorization', `Bearer ${accessToken}`);
+  //     console.log('Access Token 저장:', accessToken);
+  //   }
+  // }, []);
 
   return (
     <div className="login-container">

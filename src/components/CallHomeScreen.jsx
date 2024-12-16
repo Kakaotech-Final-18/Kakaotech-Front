@@ -94,8 +94,8 @@ const CallHomeScreen = () => {
         )
         .then((response) => {
           console.log(response);
-          navigate(`/call/${roomName}?talkId=${response.data}`, {
-            state: { email },
+          navigate(`/call/${roomName}`, {
+            state: { talkId: response.data },
           });
         });
       } catch (error) {

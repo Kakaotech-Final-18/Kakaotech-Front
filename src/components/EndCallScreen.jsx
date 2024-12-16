@@ -18,7 +18,7 @@ const EndCallScreen = () => {
   // URL에서 roomName 가져오기
   const searchParams = new URLSearchParams(location.search);
   const roomName = searchParams.get('roomName');
-  const talkId = searchParams.get('talkId'); // 여전히 talkId가 필요한 경우 유지
+  const { talkId } = location.state || {};
 
   useEffect(() => {
     // AI 요약된 TODO 받기

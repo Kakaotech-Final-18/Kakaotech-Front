@@ -25,7 +25,6 @@ const CallScreen = () => {
   const myPeerConnection = useRef(null);
   const myDataChannel = useRef(null);
 
-  const { roomName } = useParams();
   const socket = useSocket();
 
   const { userInfo, setUserInfo } = useUserInfo();
@@ -71,8 +70,13 @@ const CallScreen = () => {
   useEffect(() => {
     console.log('Decoded Room Name:', decodedRoomName);
     if (!decodedRoomName) {
-      console.log('유효하지 않은 roomName입니다.');
-      navigate('/call/home'); // 유효하지 않은 roomName이면 홈으로 이동
+      showModal(<>
+        잘못된 방 이름입니다.
+        <br />
+        홈으로 이동합니다.
+      </>,()=>{
+        navigate('/call/home');
+      });
     }
   }, [decodedRoomName]);
 

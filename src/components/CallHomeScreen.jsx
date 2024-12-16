@@ -17,6 +17,7 @@ const CallHomeScreen = () => {
 
   const fetchUserInfo = async (accessToken) => {
     try {
+     
       const response = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/api/v1/user/info`,
         {
@@ -27,7 +28,6 @@ const CallHomeScreen = () => {
         }
       );
       const data = response.data;
-      console.log(data);
       setUserInfo({
         nickname: data.nickname,
         email: data.email,

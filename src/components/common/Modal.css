@@ -30,12 +30,8 @@
 
 .modal-close-button {
   position: absolute;
-  top: 0;
-  right: 0;
-  transform: translate(
-    50%,
-    -50%
-  ); /* 버튼의 중심이 오른쪽 위 꼭지점에 오도록 설정 */
+  top: 5px;
+  right: 5px;
   width: 30px;
   height: 30px;
   background: transparent;

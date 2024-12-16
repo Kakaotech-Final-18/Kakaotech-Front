@@ -18,7 +18,7 @@ test.describe('Voice and Chat Call Flow', () => {
     // 오디오 파일 존재 확인
     const audioFiles = ['greeting.wav', 'suggest.wav', 'agree.wav'];
     for (const file of audioFiles) {
-      const filePath = path.join(__dirname, '../../fixtures/audio', file);
+      const filePath = path.join(process.cwd(), 'tests/fixtures/audio', file);
       try {
         await fs.access(filePath);
       } catch (error) {

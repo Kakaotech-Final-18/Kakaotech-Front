@@ -15,6 +15,7 @@ import './CallScreen.css';
 
 const CallScreen = () => {
   const { roomName: decodedRoomName } = useRoomName(useParams().roomName);
+  const roomName = decodedRoomName;
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -35,10 +36,6 @@ const CallScreen = () => {
     setPeerProfileImage,
   } = usePeer();
 
-  // TODO : 로그인 붙이면서 이거 고치기
-  // const [email, setEmail] = useState(
-  //   location.state?.email || 'callee@parrotalk.com'
-  // );
   const { talkId } = location.state || {};
   const screenType = useRef(null);
   const [isSelectionLocked, setSelectionLocked] = useState(false);
@@ -54,31 +51,37 @@ const CallScreen = () => {
   const [modalCallback, setModalCallback] = useState(null);
 
   const showModal = (message, callback) => {
+    console.log('[CallScreen] showModal called with message:', message);
     setModalMessage(message);
     setModalCallback(() => callback);
     setModalOpen(true);
   };
 
   const closeModal = () => {
+    console.log('[CallScreen] closeModal called');
     setModalOpen(false);
     if (modalCallback) {
-      modalCallback(); // 모달 닫힐 때 콜백 실행
-      setModalCallback(null); // 콜백 초기화
+      console.log('[CallScreen] closeModal callback excuting');
+      modalCallback();
+      setModalCallback(null);
     }
   };
 
   useEffect(() => {
     console.log('Decoded Room Name:', decodedRoomName);
-    if (!decodedRoomName) {
-      showModal(<>
-        잘못된 방 이름입니다.
-        <br />
-        홈으로 이동합니다.
-      </>,()=>{
-        navigate('/call/home');
-      });
+    if (!roomName) {
+      showModal(
+        <>
+          잘못된 방 이름입니다.
+          <br />
+          홈으로 이동합니다.
+        </>,
+        () => {
+          navigate('/call/home');
+        }
+      );
     }
-  }, [decodedRoomName]);
+  }, [roomName]);
 
   useEffect(() => {
     const storedUserInfo = localStorage.getItem('userInfo');

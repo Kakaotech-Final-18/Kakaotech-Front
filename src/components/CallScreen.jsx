@@ -10,9 +10,11 @@ import CallVoiceScreen from './CallVoiceScreen';
 import { useUserInfo } from '../context/UserInfoContext';
 import { usePeer } from '../context/PeerContext';
 import Modal from './common/Modal';
+import { useRoomName } from '../hooks/useRoomName';
 import './CallScreen.css';
 
 const CallScreen = () => {
+  const { roomName: decodedRoomName } = useRoomName(useParams().roomName);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -67,6 +69,14 @@ const CallScreen = () => {
   };
 
   useEffect(() => {
+    console.log('Decoded Room Name:', decodedRoomName);
+    if (!decodedRoomName) {
+      console.log('유효하지 않은 roomName입니다.');
+      navigate('/call/home'); // 유효하지 않은 roomName이면 홈으로 이동
+    }
+  }, [decodedRoomName]);
+
+  useEffect(() => {
     const storedUserInfo = localStorage.getItem('userInfo');
 
     if (storedUserInfo) {
@@ -81,7 +91,6 @@ const CallScreen = () => {
       localStorage.setItem('userInfo', JSON.stringify(defaultUserInfo));
     }
   }, [setUserInfo]);
-
 
   useEffect(() => {
     const initialize = async () => {
@@ -312,7 +321,7 @@ const CallScreen = () => {
 
   const handleNotificationHi = peerEmail => {
     console.log(`${peerEmail} has joined the room.`);
-    console.log("TalkId::",talkId);      
+    console.log('TalkId::', talkId);
     axios
       .post(
         `${import.meta.env.VITE_API_BASE_URL}/api/v1/talk/peer`,
@@ -529,7 +538,7 @@ const CallScreen = () => {
       console.log('Navigating to /call/end...');
       navigate(`/call/end?roomName=${roomName}`, {
         state: { talkId },
-      });      
+      });
       console.log('Navigation to /call/end completed.');
     } catch (error) {
       console.error('Error during navigation:', error);

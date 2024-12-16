@@ -22,7 +22,7 @@ const CallControl = ({ nickname, profileImage, onEndCall }) => {
             e.target.src = DefaultProfile;
           }}
         />
-        <span className="call-control-nickname">{nickname}</span>
+        <span className="call-control-nickname">{displayName}</span>
       </div>
       {showEndCallButton && (
         <button className="call-control-end-button" onClick={onEndCall}>

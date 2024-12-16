@@ -20,6 +20,6 @@
     },
     "types": ["node", "@playwright/test"]
   },
-  "include": ["src", "tests"],
+  "include": ["src", "tests", "tests/e2e/types"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

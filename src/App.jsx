@@ -30,12 +30,13 @@ const App = () => {
         console.log('Access Token 저장 완료:', accessToken);
         if(currentPath === '/')
           navigate('/call/home'); // Access Token이 있으면 CallHomeScreen으로 이동
-      } else {
-        navigate('/'); // Access Token이 없으면 로그인 화면으로 이동
-      }
+      } 
+      // else {
+      //   navigate('/'); // Access Token이 없으면 로그인 화면으로 이동
+      // }
     } catch (error) {
       console.error('토큰 요청 실패:', error);
-      navigate('/'); // 에러 발생 시 로그인 화면으로 이동
+      // navigate('/'); // 에러 발생 시 로그인 화면으로 이동
     } finally {
       setLoading(false); // 로딩 완료
     }

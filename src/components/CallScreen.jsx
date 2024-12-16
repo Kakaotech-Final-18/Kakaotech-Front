@@ -38,7 +38,7 @@ const CallScreen = () => {
   // const [email, setEmail] = useState(
   //   location.state?.email || 'callee@parrotalk.com'
   // );
-  const [talkId, setTalkId] = useState(null); // talkId 상태 추가
+  const { talkId } = location.state || {};
   const screenType = useRef(null);
   const [isSelectionLocked, setSelectionLocked] = useState(false);
 
@@ -82,14 +82,6 @@ const CallScreen = () => {
     }
   }, [setUserInfo]);
 
-  const talkIdRef = useRef(null);
-
-  useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const extractedTalkId = queryParams.get('talkId');
-    talkIdRef.current = extractedTalkId; // useRef에 저장
-    setTalkId(extractedTalkId); // 상태 업데이트
-  }, [location.search]);
 
   useEffect(() => {
     const initialize = async () => {
@@ -319,15 +311,13 @@ const CallScreen = () => {
   };
 
   const handleNotificationHi = peerEmail => {
-    const currentTalkId = talkIdRef.current; // 최신 talkId 참조
     console.log(`${peerEmail} has joined the room.`);
-    console.log('Talk ID:', currentTalkId);
-
+    console.log("TalkId::",talkId);      
     axios
       .post(
         `${import.meta.env.VITE_API_BASE_URL}/api/v1/talk/peer`,
         {
-          talkId: currentTalkId, // useRef로 저장된 talkId 사용
+          talkId: talkId, // useRef로 저장된 talkId 사용
           receiverEmail: peerEmail,
         },
         {
@@ -537,7 +527,9 @@ const CallScreen = () => {
     try {
       // UI 이동 보장
       console.log('Navigating to /call/end...');
-      navigate(`/call/end?roomName=${roomName}&talkId=${talkId}`);
+      navigate(`/call/end?roomName=${roomName}`, {
+        state: { talkId },
+      });      
       console.log('Navigation to /call/end completed.');
     } catch (error) {
       console.error('Error during navigation:', error);

@@ -167,38 +167,6 @@ wsServer.on('connection', socket => {
     socket.to(roomName).emit('ice', ice);
   });
 
-  function requestAISummary(roomName, messages) {
-    // 요약 요청
-    console.log('roomName: ' + roomName);
-    const combinedContent = messages.map(msg => msg.content).join(' ');
-    console.log('message: ' + combinedContent);
-
-    // 실제 요약 요청
-    const aiRequest = axios
-      .post(process.env.AI_SUMMARY, {
-        room_number: roomName,
-        sentence: combinedContent,
-      })
-      .then(response => {
-        // 성공적인 요청 처리
-        const { summary, todo } = response.data;
-        console.log(todo);
-        socket.emit('ai_summary', todo);
-      })
-      .catch(error => {
-        if (error.code === 'ECONNREFUSED') {
-          console.error(
-            'SUMMARY : Connection refused. Please check the server status.'
-          );
-        } else {
-          console.error(
-            'SUMMARY : An unexpected error occurred:',
-            error.message
-          );
-        }
-      });
-  }
-
   socket.on('ai_summary', (roomName, todo) => {
     rooms[`${roomName}_todo`] = todo;
   });
@@ -216,10 +184,6 @@ wsServer.on('connection', socket => {
   // 방 퇴장 로직
   socket.on('leave_room', async data => {
     const { roomName } = data;
-    // if (!rooms[`${roomName}_chatMessages`]) {
-    //   rooms[`${roomName}_chatMessages`] = chatMessages;
-    // }
-    // requestAISummary(roomName, rooms[`${roomName}_chatMessages`]);
 
     socket.off('audio_chunk', handleAudioChunk);
     console.log(`[Audio] audio_chunk listener removed for room: ${roomName}`);

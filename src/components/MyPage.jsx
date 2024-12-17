@@ -105,6 +105,27 @@ const MyPage = () => {
         }
     };
 
+    const handleDeleteRoom = async (talkId) => {
+        try {
+            // 서버로 삭제 요청
+            await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/v1/details/${talkId}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+                    Accept: 'application/json',
+                },
+            });
+
+            // 클라이언트 상태 업데이트: 삭제된 방 제거
+            const updatedRoomDetails = roomDetails.filter((detail) => detail.talkId !== talkId);
+            setRoomDetails(updatedRoomDetails);
+
+            console.log(`Room with talkId "${talkId}" deleted successfully.`);
+        } catch (error) {
+            console.error(`Error deleting room with talkId "${talkId}":`, error);
+        }
+    };
+
+
     return (
         <div className="mypage-container">
             <header className="profile-header">
@@ -157,6 +178,10 @@ const MyPage = () => {
                                         })()}
                                     </span>
                                 </div>
+                                <button
+                                    className="close-button"
+                                    onClick={() => handleDeleteRoom(talkDetail.talkId)} // 삭제 함수 호출
+                                />
                             </div>
                         </div>
                         <div className="task-list">

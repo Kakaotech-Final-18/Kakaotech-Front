@@ -22,7 +22,11 @@ const CallControl = ({ nickname, profileImage, onEndCall }) => {
             e.target.src = DefaultProfile;
           }}
         />
-        <span className="call-control-nickname">{displayName}</span>
+        <span className="call-control-nickname">
+          {showEndCallButton
+            ? nickname
+            : `${nickname}님과의 통화가 종료되었습니다`}
+        </span>
       </div>
       {showEndCallButton && (
         <button className="call-control-end-button" onClick={onEndCall}>

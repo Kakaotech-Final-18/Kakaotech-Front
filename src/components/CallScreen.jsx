@@ -533,13 +533,16 @@ const CallScreen = () => {
       if (socket) {
         console.log('Sending leave_room event to server...');
         socket.off('audio_chunk'); // audio_chunk 리스너 제거
-        socket.emit('leave_room', { roomName, chatMessages });
+        socket.emit('leave_room', { roomName });
+
+        navigate(`/call/end?roomName=${roomName}`, {
+          state: { talkId, chatMessages },
+        });  
         console.log('leave_room event sent successfully.');
       }
     } catch (error) {
       console.error('Error while sending leave_room event:', error);
     }
-
     try {
       // UI 이동 보장
       console.log('Navigating to /call/end...');

@@ -3,7 +3,6 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getMedia, makeConnection } from '../services/WebrtcService';
 import { useSocket } from '../context/SocketContext';
 import DefaultProfile from '../assets/default-profile.svg';
-import axios from 'axios';
 import CallSetting from './CallSetting';
 import CallChatScreen from './CallChatScreen';
 import CallVoiceScreen from './CallVoiceScreen';
@@ -11,6 +10,7 @@ import { useUserInfo } from '../context/UserInfoContext';
 import { usePeer } from '../context/PeerContext';
 import Modal from './common/Modal';
 import './CallScreen.css';
+import api from '../interceptors/LoginInterceptor'; 
 
 const CallScreen = () => {
   const location = useLocation();
@@ -311,11 +311,9 @@ const CallScreen = () => {
   };
 
   const handleNotificationHi = peerEmail => {
-    console.log(`${peerEmail} has joined the room.`);
-    console.log("TalkId::",talkId);      
-    axios
+    api
       .post(
-        `${import.meta.env.VITE_API_BASE_URL}/api/v1/talk/peer`,
+        '/api/v1/talk/peer',
         {
           talkId: talkId, // useRef로 저장된 talkId 사용
           receiverEmail: peerEmail,

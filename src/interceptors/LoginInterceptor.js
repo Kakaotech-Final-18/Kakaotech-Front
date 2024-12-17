@@ -1,52 +1,49 @@
-// import axios from 'axios';
-// import { response } from 'express';
+import axios from 'axios';
 
-// const api = axios.create({
-//   baseURL: import.meta.env.VITE_API_BASE_URL,
-//   withCredentials: true,
-// });
+// Axios 인스턴스 생성
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  withCredentials: true, // 쿠키를 함께 전송
+});
 
-// // 요청 인터셉터: Access Token 자동 추가
-// api.interceptors.request.use(
-//   config => {
-//     const accessToken = localStorage.getItem('Authorization');
-//     if (accessToken) config.headers.Authorization = accessToken;
-//     return config;
-//   },
-//   error => Promise.reject(error)
-// );
+// 응답 인터셉터: Access Token 만료 시 처리
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
 
-// // 응답 인터셉터: Access Token 만료시 처리
-// api.interceptors.response.use(
-//   response => response,
-//   async error => {
-//     // access token 만료
-//     if (error.response?.status === 401) {
-//       try {
-//         const refreshResponse = await axios.post(
-//           '/api/v1/auth/refresh',
-//           {},
-//           {
-//             withCredentials: true,
-//           }
-//         );
-//         const newAccessToken = refreshResponse.headers.authorization;
+    // Access Token 만료 에러 (401) && 재시도 여부 확인
+    if (error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true; // 재시도 여부 설정
 
-//         if (newAccessToken) {
-//           localStorage.setItem('Authorization', newAccessToken);
-//           error.config.headers.Authorization = newAccessToken;
-//           // 요청 재실행
-//           return api.request(error.config);
-//         }
-//       } catch (refreshError) {
-//         console.error('Refresh Token 실패:', refreshError);
-//         alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-//         localStorage.removeItem('Authorization');
-//         window.location.href = '/';
-//       }
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+      try {
+        // Refresh Token을 사용하여 Access Token 재발급
+        const response = await axios.post(
+          '/api/v1/auth/refresh',
+          {},
+          { withCredentials: true }
+        );
 
-// export default api;
+        const newAccessToken = response.headers['authorization']?.replace('Bearer ', '');
+
+        if (newAccessToken) {
+          // Access Token 갱신 및 로컬스토리지에 저장
+          localStorage.setItem('accessToken', newAccessToken);
+          console.log('Access Token 재발급 성공:', newAccessToken);
+
+          // 원래 요청에 새로운 Access Token 추가
+          originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+          return api(originalRequest); // 원래 요청 재시도
+        }
+      } catch (refreshError) {
+        console.error('Refresh Token을 사용한 재발급 실패:', refreshError);
+        localStorage.removeItem('accessToken');
+        window.location.href = '/'; // 로그인 페이지로 이동
+      }
+    }
+
+    return Promise.reject(error); // 다른 에러는 그대로 전달
+  }
+);
+
+export default api;

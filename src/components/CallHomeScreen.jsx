@@ -6,7 +6,7 @@ import PhoneIcon from '../assets/phone-icon.svg';
 import DefaultProfile from '../assets/default-profile.svg';
 import './CallHomeScreen.css';
 import { useUserInfo } from '../context/UserInfoContext';
-import axios from 'axios';
+import api from '../interceptors/LoginInterceptor'; 
 
 const CallHomeScreen = () => {
   const [roomLink, setRoomLink] = useState('');
@@ -15,55 +15,36 @@ const CallHomeScreen = () => {
   const socket = useSocket();
   const { userInfo, setUserInfo } = useUserInfo();
 
-  const fetchUserInfo = async accessToken => {
+  const fetchUserInfo = accessToken => {
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/api/v1/user/info`,
+      api.get(
+        '/api/v1/user/info',
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             Accept: 'application/json',
           },
         }
-      );
-      const data = response.data;
-      setUserInfo({
-        nickname: data.nickname,
-        email: data.email,
-        profileImage: data.profileImage,
-      });
-      localStorage.setItem('userInfo', JSON.stringify(data));
+      )
+      .then((response) => {
+        const data = response.data;
+        setUserInfo({
+          nickname: data.nickname,
+          email: data.email,
+          profileImage: data.profileImage,
+        });
+        localStorage.setItem('userInfo', JSON.stringify(data));
+      })
     } catch (error) {
       console.error('Error fetching user info:', error);
     }
   };
 
-  const fetchToken = async () => {
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/access`,
-        {},
-        {
-          withCredentials: true, // 쿠키 포함
-        }
-      );
-
-      const accessToken = response.headers['authorization']?.replace(
-        'Bearer ',
-        ''
-      );
-      if (accessToken) {
-        localStorage.setItem('accessToken', accessToken);
-        console.log('Access Token 저장 완료:', accessToken);
-        await fetchUserInfo(accessToken);
-      }
-    } catch (error) {
-      console.error('Fetch Error:', error);
-    }
-  };
-
   useEffect(() => {
-    fetchToken();
+    const accessToken = localStorage.getItem('accessToken');
+    if(accessToken) {
+      fetchUserInfo(accessToken);
+    }
   }, []);
 
   const handleCreateRoom = () => {
@@ -81,9 +62,9 @@ const CallHomeScreen = () => {
       const email = userInfo.email;
 
       try {
-        axios
+        api
           .post(
-            `${import.meta.env.VITE_API_BASE_URL}/api/v1/talk/create`,
+            '/api/v1/talk/create',
             {
               roomName: roomName,
             },

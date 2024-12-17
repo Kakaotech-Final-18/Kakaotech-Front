@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import './MyPage.css';
 import { useUserInfo } from '../context/UserInfoContext';
-import axios from 'axios';
 import DefaultProfile from '../assets/default-profile.svg';
+import api from '../interceptors/LoginInterceptor'; 
 
 const MyPage = () => {
     const { userInfo, setUserInfo } = useUserInfo();
@@ -12,7 +12,7 @@ const MyPage = () => {
     useEffect(() => {
         const fetchRoomDetails = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/v1/details`, {
+                const response = await api.get('/api/v1/details', {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
                         Accept: 'application/json',
@@ -62,8 +62,8 @@ const MyPage = () => {
                 (detail) => detail.talkId === talkId && detail.todoTitle === todoTitle
             ).todoStatus;
 
-            await axios.patch(
-                `${import.meta.env.VITE_API_BASE_URL}/api/v1/todo/update`,
+            await api.patch(
+                '/api/v1/todo/update',
                 {
                     talkId: talkId,
                     todoTitle: todoTitle,
@@ -85,7 +85,7 @@ const MyPage = () => {
 
     const handleLogout = async () => {
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/logout`, null, {
+            await api.post('/logout', null, {
                 withCredentials: true, // 쿠키 포함
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('accessToken')}`,

@@ -5,17 +5,18 @@ import CallControl from './CallControl';
 import { useSocket } from '../context/SocketContext';
 import { usePeer } from '../context/PeerContext';
 import axios from 'axios';
+import Modal from './common/Modal';
 
 const EndCallScreen = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // URL에서 query parameter 가져오기
+  const location = useLocation(); 
   const [todos, setTodos] = useState([]);
   const [checkedTodos, setCheckedTodos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const socket = useSocket();
   const { peerNickname, peerProfileImage } = usePeer();
+  const [isModalOpen, setIsModalOpen] = useState(false); 
 
-  // URL에서 roomName 가져오기
   const searchParams = new URLSearchParams(location.search);
   const roomName = searchParams.get('roomName');
   const { talkId, chatMessages } = location.state || {}; 
@@ -23,10 +24,8 @@ const EndCallScreen = () => {
   useEffect(() => {
     const fetchTodos = async () => {
       setIsLoading(true);
-
       try {
         if (chatMessages && chatMessages.length > 0) {
-          // chatMessages가 비어있지 않은 경우 AI 요약 요청
           const combinedContent = chatMessages.map(msg => msg.content).join(' ');
           const response = await axios.post(import.meta.env.VITE_AI_SUMMARY, {
             room_number: roomName,
@@ -34,10 +33,9 @@ const EndCallScreen = () => {
           });
           const { todo } = response.data;
           setTodos(todo);
-          setCheckedTodos(new Array(todo.length).fill(false)); // 체크 초기화
+          setCheckedTodos(new Array(todo.length).fill(false));
           socket.emit('ai_summary', roomName, todo);
         } else {
-          // chatMessages가 비어있는 경우 서버에서 todo 요청
           socket.emit('fetch_todo', roomName, (response) => {
             if (response.success) {
               setTodos(response.todo);
@@ -57,16 +55,20 @@ const EndCallScreen = () => {
     fetchTodos();
   }, [roomName, chatMessages, socket]);
 
-  // 체크박스 상태 업데이트
   const handleCheckboxChange = (index) => {
     const newCheckedTodos = [...checkedTodos];
     newCheckedTodos[index] = !newCheckedTodos[index];
     setCheckedTodos(newCheckedTodos);
   };
 
-  // 선택 항목 저장
   const handleConfirm = async () => {
     const selectedTodos = todos.filter((_, index) => checkedTodos[index]);
+
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+      setIsModalOpen(true); // 모달 열기
+      return;
+    }
 
     if (selectedTodos.length === 0) {
       navigate('/call/home');
@@ -74,7 +76,6 @@ const EndCallScreen = () => {
     }
 
     try {
-      // 서버로 요청 데이터 전송
       const response = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/api/v1/todo/create`,
         {
@@ -83,7 +84,7 @@ const EndCallScreen = () => {
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${accessToken}`,
             Accept: 'application/json',
           },
         }
@@ -125,6 +126,17 @@ const EndCallScreen = () => {
       <button className="select-button" onClick={handleConfirm}>
         선택 항목 기록하기
       </button>
+
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => { setIsModalOpen(false); navigate('/call/home'); }} 
+        message={
+          <>
+            로그인이 되어 있지 않아<br />
+            요약 기능을 사용할 수 없습니다.
+          </>
+        }
+      />
     </div>
   );
 };

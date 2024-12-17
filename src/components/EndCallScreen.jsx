@@ -18,21 +18,44 @@ const EndCallScreen = () => {
   // URL에서 roomName 가져오기
   const searchParams = new URLSearchParams(location.search);
   const roomName = searchParams.get('roomName');
-  const { talkId } = location.state || {};
+  const { talkId, chatMessages } = location.state || {}; 
 
   useEffect(() => {
-    // AI 요약된 TODO 받기
-    socket.on("ai_summary", (todo) => {
-      console.log(todo);
-      setTodos(todo);
-      setCheckedTodos(new Array(todo.length).fill(false)); // 체크 초기화
-      setIsLoading(false);
-    });
+    const fetchTodos = async () => {
+      setIsLoading(true);
 
-    return () => {
-      socket.off("ai_summary");
+      try {
+        if (chatMessages && chatMessages.length > 0) {
+          // chatMessages가 비어있지 않은 경우 AI 요약 요청
+          const combinedContent = chatMessages.map(msg => msg.content).join(' ');
+          const response = await axios.post(import.meta.env.VITE_AI_SUMMARY, {
+            room_number: roomName,
+            sentence: combinedContent,
+          });
+          const { todo } = response.data;
+          setTodos(todo);
+          setCheckedTodos(new Array(todo.length).fill(false)); // 체크 초기화
+          socket.emit('ai_summary', roomName, todo);
+        } else {
+          // chatMessages가 비어있는 경우 서버에서 todo 요청
+          socket.emit('fetch_todo', roomName, (response) => {
+            if (response.success) {
+              setTodos(response.todo);
+              setCheckedTodos(new Array(response.todo.length).fill(false));
+            } else {
+              console.error('Todo 데이터 없음:', response.message);
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Todo 데이터 로드 중 오류:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, [socket, roomName]);
+
+    fetchTodos();
+  }, [roomName, chatMessages, socket]);
 
   // 체크박스 상태 업데이트
   const handleCheckboxChange = (index) => {

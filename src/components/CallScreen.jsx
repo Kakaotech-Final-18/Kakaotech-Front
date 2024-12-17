@@ -10,9 +10,12 @@ import CallVoiceScreen from './CallVoiceScreen';
 import { useUserInfo } from '../context/UserInfoContext';
 import { usePeer } from '../context/PeerContext';
 import Modal from './common/Modal';
+import { useRoomName } from '../hooks/useRoomName';
 import './CallScreen.css';
 
 const CallScreen = () => {
+  const { roomName: decodedRoomName } = useRoomName(useParams().roomName);
+  const roomName = decodedRoomName;
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -23,7 +26,6 @@ const CallScreen = () => {
   const myPeerConnection = useRef(null);
   const myDataChannel = useRef(null);
 
-  const { roomName } = useParams();
   const socket = useSocket();
 
   const { userInfo, setUserInfo } = useUserInfo();
@@ -34,10 +36,6 @@ const CallScreen = () => {
     setPeerProfileImage,
   } = usePeer();
 
-  // TODO : 로그인 붙이면서 이거 고치기
-  // const [email, setEmail] = useState(
-  //   location.state?.email || 'callee@parrotalk.com'
-  // );
   const { talkId } = location.state || {};
   const screenType = useRef(null);
   const [isSelectionLocked, setSelectionLocked] = useState(false);
@@ -53,18 +51,37 @@ const CallScreen = () => {
   const [modalCallback, setModalCallback] = useState(null);
 
   const showModal = (message, callback) => {
+    console.log('[CallScreen] showModal called with message:', message);
     setModalMessage(message);
     setModalCallback(() => callback);
     setModalOpen(true);
   };
 
   const closeModal = () => {
+    console.log('[CallScreen] closeModal called');
     setModalOpen(false);
     if (modalCallback) {
-      modalCallback(); // 모달 닫힐 때 콜백 실행
-      setModalCallback(null); // 콜백 초기화
+      console.log('[CallScreen] closeModal callback excuting');
+      modalCallback();
+      setModalCallback(null);
     }
   };
+
+  useEffect(() => {
+    console.log('Decoded Room Name:', decodedRoomName);
+    if (!roomName) {
+      showModal(
+        <>
+          잘못된 방 이름입니다.
+          <br />
+          홈으로 이동합니다.
+        </>,
+        () => {
+          navigate('/call/home');
+        }
+      );
+    }
+  }, [roomName]);
 
   useEffect(() => {
     const storedUserInfo = localStorage.getItem('userInfo');
@@ -81,7 +98,6 @@ const CallScreen = () => {
       localStorage.setItem('userInfo', JSON.stringify(defaultUserInfo));
     }
   }, [setUserInfo]);
-
 
   useEffect(() => {
     const initialize = async () => {
@@ -312,7 +328,7 @@ const CallScreen = () => {
 
   const handleNotificationHi = peerEmail => {
     console.log(`${peerEmail} has joined the room.`);
-    console.log("TalkId::",talkId);      
+    console.log('TalkId::', talkId);
     axios
       .post(
         `${import.meta.env.VITE_API_BASE_URL}/api/v1/talk/peer`,
@@ -526,6 +542,16 @@ const CallScreen = () => {
       }
     } catch (error) {
       console.error('Error while sending leave_room event:', error);
+    }
+    try {
+      // UI 이동 보장
+      console.log('Navigating to /call/end...');
+      navigate(`/call/end?roomName=${roomName}`, {
+        state: { talkId },
+      });
+      console.log('Navigation to /call/end completed.');
+    } catch (error) {
+      console.error('Error during navigation:', error);
     }
   };
 

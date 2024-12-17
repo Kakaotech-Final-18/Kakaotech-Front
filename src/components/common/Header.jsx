@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import './Header.css';
 import Logo from './Logo';
 import { useUserInfo } from '../../context/UserInfoContext';
-import DefaultProfile from '../assets/default-profile.svg';
+import DefaultProfile from '../../assets/default-profile.svg';
 
 const Header = () => {
   const location = useLocation();

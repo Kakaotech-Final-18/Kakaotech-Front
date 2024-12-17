@@ -7,8 +7,10 @@ import DefaultProfile from '../assets/default-profile.svg';
 import './CallHomeScreen.css';
 import { useUserInfo } from '../context/UserInfoContext';
 import axios from 'axios';
+import { useRoomName } from '../hooks/useRoomName';
 
 const CallHomeScreen = () => {
+  const { encodeRoomName } = useRoomName();
   const [roomLink, setRoomLink] = useState('');
   const [createButtonText, setCreateButtonText] = useState('방 생성');
   const navigate = useNavigate();
@@ -68,9 +70,10 @@ const CallHomeScreen = () => {
 
   const handleCreateRoom = () => {
     socket.emit('create_room', roomName => {
-      const link = `${window.location.origin}/call/${roomName}`;
+      const encodedRoomName = encodeRoomName(roomName);
+      const link = `${window.location.origin}/call/${encodedRoomName}`;
       setRoomLink(link);
-      console.log('Room created with link:', link);
+      console.log('Room created with encoded link:', link);
       setCreateButtonText('방 생성 완료!');
     });
   };

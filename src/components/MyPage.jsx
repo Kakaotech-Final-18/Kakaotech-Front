@@ -3,11 +3,14 @@ import './MyPage.css';
 import { useUserInfo } from '../context/UserInfoContext';
 import DefaultProfile from '../assets/default-profile.svg';
 import api from '../interceptors/LoginInterceptor'; 
+import Modal from './common/Modal'; // 모달 컴포넌트 import
 
 const MyPage = () => {
     const { userInfo, setUserInfo } = useUserInfo();
     const [profileImage, setProfileImage] = useState(DefaultProfile);
     const [roomDetails, setRoomDetails] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false); // 모달 상태 추가
+    const [modalMessage, setModalMessage] = useState('');  // 모달 메시지 추가
 
     useEffect(() => {
         const fetchRoomDetails = async () => {
@@ -37,7 +40,6 @@ const MyPage = () => {
         }
     }, [setUserInfo]);
 
-    // Todo 상태 관리 함수
     const toggleTodoStatus = async (talkId, todoTitle) => {
         try {
             // roomDetails에서 talkId에 해당하는 항목 찾기
@@ -82,6 +84,29 @@ const MyPage = () => {
             console.error("Error updating todo status:", error);
         }
     };
+  
+    const handleDeleteRoom = async (talkId) => {
+        try {
+            // 서버로 삭제 요청
+            await api.delete('/api/v1/details/${talkId}', {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+                    Accept: 'application/json',
+                },
+            });
+
+            // 클라이언트 상태 업데이트: 삭제된 방 제거
+            const updatedRoomDetails = roomDetails.filter((detail) => detail.talkId !== talkId);
+            setRoomDetails(updatedRoomDetails);
+
+            // 모달 상태 업데이트
+            setModalMessage('삭제되었습니다.');
+            setIsModalOpen(true);
+            console.log(`Room with talkId "${talkId}" deleted successfully.`);
+        } catch (error) {
+            console.error(`Error deleting room with talkId "${talkId}":`, error);
+        }
+    };
 
     const handleLogout = async () => {
         try {
@@ -93,12 +118,9 @@ const MyPage = () => {
                 },
             });
 
-            // 로그아웃 성공 시 localStorage 및 상태 초기화
             localStorage.removeItem('accessToken');
             localStorage.removeItem('userInfo');
             setUserInfo(null);
-
-            // 메인 페이지 또는 로그인 페이지로 리디렉션
             window.location.href = '/';
         } catch (error) {
             console.error('Error during logout:', error);
@@ -122,9 +144,9 @@ const MyPage = () => {
                     roomDetails.reduce((acc, detail) => {
                         if (!acc[detail.talkId]) {
                             acc[detail.talkId] = {
-                                talkId: detail.talkId, // talkId 추가
+                                talkId: detail.talkId,
                                 receiverName: detail.receiverName,
-                                receiverProfileImage: detail.receiverProfileImage == "default" ? DefaultProfile : detail.receiverProfileImage, // Placeholder image
+                                receiverProfileImage: detail.receiverProfileImage === "default" ? DefaultProfile : detail.receiverProfileImage,
                                 talkCreatedAt: detail.talkCreatedAt,
                                 todos: [],
                             };
@@ -139,24 +161,24 @@ const MyPage = () => {
                     <div className="chat-card" key={index}>
                         <div className="chat-header">
                             <div className="chat-profile">
-                                <img
-                                    src={talkDetail.receiverProfileImage}
-                                    alt="Profile"
-                                    className="profile-icon"
-                                />
+                                <img src={talkDetail.receiverProfileImage} alt="Profile" className="profile-icon" />
                                 <div className="chat-info">
                                     <p className="chat-title">{`${talkDetail.receiverName}님과의 통화`}</p>
                                     <span className="chat-date">
                                         {(() => {
                                             const date = new Date(talkDetail.talkCreatedAt);
-                                            const month = String(date.getMonth() + 1).padStart(2, '0'); // 월
-                                            const day = String(date.getDate()).padStart(2, '0'); // 일
-                                            const hours = String(date.getHours()).padStart(2, '0'); // 시
-                                            const minutes = String(date.getMinutes()).padStart(2, '0'); // 분
-                                            return `${month}/${day} ${hours}:${minutes}`; // 최종 포맷
+                                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                                            const day = String(date.getDate()).padStart(2, '0');
+                                            const hours = String(date.getHours()).padStart(2, '0');
+                                            const minutes = String(date.getMinutes()).padStart(2, '0');
+                                            return `${month}/${day} ${hours}:${minutes}`;
                                         })()}
                                     </span>
                                 </div>
+                                <button
+                                    className="close-button"
+                                    onClick={() => handleDeleteRoom(talkDetail.talkId)}
+                                />
                             </div>
                         </div>
                         <div className="task-list">
@@ -166,10 +188,7 @@ const MyPage = () => {
                                         type="checkbox"
                                         id={`todo-${todo.todoTitle}`}
                                         checked={todo.todoStatus === 'DONE'}
-                                        onChange={() => {
-                                            toggleTodoStatus(talkDetail.talkId, todo.todoTitle);
-                                        }
-                                        }
+                                        onChange={() => toggleTodoStatus(talkDetail.talkId, todo.todoTitle)}
                                     />
                                     <label
                                         htmlFor={`todo-${todo.todoTitle}`}
@@ -183,6 +202,13 @@ const MyPage = () => {
                     </div>
                 ))}
             </section>
+
+            {/* 모달 컴포넌트 */}
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)} // 닫기 버튼 클릭 시 모달 닫기
+                message={modalMessage}
+            />
         </div>
     );
 };

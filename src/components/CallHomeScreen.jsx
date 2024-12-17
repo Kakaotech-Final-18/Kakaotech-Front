@@ -7,8 +7,10 @@ import DefaultProfile from '../assets/default-profile.svg';
 import './CallHomeScreen.css';
 import { useUserInfo } from '../context/UserInfoContext';
 import api from '../interceptors/LoginInterceptor'; 
+import { useRoomName } from '../hooks/useRoomName';
 
 const CallHomeScreen = () => {
+  const { encodeRoomName } = useRoomName();
   const [roomLink, setRoomLink] = useState('');
   const [createButtonText, setCreateButtonText] = useState('방 생성');
   const navigate = useNavigate();
@@ -49,9 +51,10 @@ const CallHomeScreen = () => {
 
   const handleCreateRoom = () => {
     socket.emit('create_room', roomName => {
-      const link = `${window.location.origin}/call/${roomName}`;
+      const encodedRoomName = encodeRoomName(roomName);
+      const link = `${window.location.origin}/call/${encodedRoomName}`;
       setRoomLink(link);
-      console.log('Room created with link:', link);
+      console.log('Room created with encoded link:', link);
       setCreateButtonText('방 생성 완료!');
     });
   };
@@ -92,12 +95,12 @@ const CallHomeScreen = () => {
       <div className="call-home-container">
         <div className="profile-section">
           <img
-            src={userInfo.profileImage}
+            src={userInfo.profileImage || DefaultProfile}
             alt="Default Profile"
             className="profile-picture"
             onError={e => {
-              e.target.onerror = null; // 무한 루프 방지
-              e.target.src = DefaultProfile; // 기본 이미지로 대체
+              e.target.onerror = null;
+              e.target.src = DefaultProfile;
             }}
           />
           <div className="profile-info">

@@ -16,7 +16,6 @@ const EndCallScreen = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const socket = useSocket();
   const { peerNickname, peerProfileImage } = usePeer();
-  const [isModalOpen, setIsModalOpen] = useState(false); 
 
   const searchParams = new URLSearchParams(location.search);
   const roomName = searchParams.get('roomName');
@@ -94,10 +93,6 @@ const EndCallScreen = () => {
     const selectedTodos = todos.filter((_, index) => checkedTodos[index]);
 
     const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) {
-      setIsModalOpen(true); // 모달 열기
-      return;
-    }
 
     if (selectedTodos.length === 0) {
       navigate('/call/home');

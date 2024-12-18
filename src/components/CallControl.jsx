@@ -41,7 +41,7 @@ const CallControl = ({ nickname, profileImage, onEndCall }) => {
           }}
         />        
         <span className="call-control-nickname">
-          {showEndCallButton
+          {!isEndCallScreen
             ? nickname
             : `${nickname}님과의 통화가 종료되었습니다`}
         </span>

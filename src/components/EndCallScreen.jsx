@@ -5,68 +5,99 @@ import CallControl from './CallControl';
 import { useSocket } from '../context/SocketContext';
 import { usePeer } from '../context/PeerContext';
 import api from '../interceptors/LoginInterceptor'; 
+import Modal from './common/Modal';
 
 const EndCallScreen = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // URL에서 query parameter 가져오기
+  const location = useLocation(); 
   const [todos, setTodos] = useState([]);
   const [checkedTodos, setCheckedTodos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const socket = useSocket();
   const { peerNickname, peerProfileImage } = usePeer();
+  const [isModalOpen, setIsModalOpen] = useState(false); 
 
-  // URL에서 roomName 가져오기
   const searchParams = new URLSearchParams(location.search);
   const roomName = searchParams.get('roomName');
-  const { talkId, chatMessages } = location.state || {}; 
+  const { talkId, chatMessages } = location.state || {};
+
+  useEffect(() => {
+    const checkLoginStatus = () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        setIsModalOpen(true); // 로그인 상태가 아니면 모달 열기
+      }
+    };
+
+    checkLoginStatus();
+  }, []); // 컴포넌트가 처음 렌더링될 때만 실행
 
   useEffect(() => {
     const fetchTodos = async () => {
       setIsLoading(true);
-
       try {
         if (chatMessages && chatMessages.length > 0) {
-          // chatMessages가 비어있지 않은 경우 AI 요약 요청
           const combinedContent = chatMessages.map(msg => msg.content).join(' ');
-          const response = await axios.post(import.meta.env.VITE_AI_SUMMARY, {
-            room_number: roomName,
-            sentence: combinedContent,
+  
+          // Socket을 통해 Node.js 서버로 AI 요약 요청
+          socket.emit('request_ai_summary', { roomName, combinedContent });
+  
+          // 서버에서 반환되는 이벤트를 수신
+          socket.on('ai_summary_response', (data) => {
+            if (data.success) {
+              setTodos(data.todo);
+              setCheckedTodos(new Array(data.todo.length).fill(false));
+              console.log('AI 요약 완료:', data.todo);
+            } else {
+              console.error('AI 요약 실패:', data.message);
+            }
+            setIsLoading(false);
           });
-          const { todo } = response.data;
-          setTodos(todo);
-          setCheckedTodos(new Array(todo.length).fill(false)); // 체크 초기화
-          socket.emit('ai_summary', roomName, todo);
         } else {
-          // chatMessages가 비어있는 경우 서버에서 todo 요청
-          socket.emit('fetch_todo', roomName, (response) => {
+          socket.emit('fetch_todo', roomName, response => {
             if (response.success) {
               setTodos(response.todo);
               setCheckedTodos(new Array(response.todo.length).fill(false));
             } else {
               console.error('Todo 데이터 없음:', response.message);
             }
+            setIsLoading(false);
           });
         }
       } catch (error) {
-        console.error('Todo 데이터 로드 중 오류:', error);
-      } finally {
+        console.error('데이터 요청 중 오류 발생:', error);
         setIsLoading(false);
       }
     };
-
+  
     fetchTodos();
+  
+    // Clean-up: 이벤트 리스너 제거
+    return () => {
+      socket.off('ai_summary_response');
+    };
   }, [roomName, chatMessages, socket]);
+  
 
   // 체크박스 상태 업데이트
-  const handleCheckboxChange = (index) => {
+  const handleCheckboxChange = index => {
     const newCheckedTodos = [...checkedTodos];
     newCheckedTodos[index] = !newCheckedTodos[index];
     setCheckedTodos(newCheckedTodos);
   };
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
 
-  // 선택 항목 저장
   const handleConfirm = async () => {
     const selectedTodos = todos.filter((_, index) => checkedTodos[index]);
+
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+      setIsModalOpen(true); // 모달 열기
+      return;
+    }
 
     if (selectedTodos.length === 0) {
       navigate('/call/home');
@@ -83,7 +114,7 @@ const EndCallScreen = () => {
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${accessToken}`,
             Accept: 'application/json',
           },
         }
@@ -125,6 +156,17 @@ const EndCallScreen = () => {
       <button className="select-button" onClick={handleConfirm}>
         선택 항목 기록하기
       </button>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        message={
+          <>
+            로그인 하시면
+            <br />
+            통화 요약을 쓸 수 있어요!
+          </>
+        }
+      />
     </div>
   );
 };

@@ -1,18 +1,17 @@
 .onboarding-container {
-  max-width: 480px; /* 모바일 기준 */
+  max-width: 480px;
   margin: 0 auto;
   padding: var(--spacing);
   display: flex;
   flex-direction: column;
-  justify-content: center; /* 아래로 정렬 */
-  min-height: 100vh; /* 화면 전체 높이 */
-  box-sizing: border-box; /* 패딩 포함 크기 계산 */
+  justify-content: center;
+  min-height: 90vh;
+  box-sizing: border-box;
 }
 
 .onboarding-image-container {
   text-align: center;
-  margin-top: 0;
-  margin-bottom: 35px;
+  margin-top: 0px;
 }
 
 .onboarding-image {
@@ -31,4 +30,5 @@
 
 .onboarding-login {
   text-align: center;
+  margin-top: 0px;
 }

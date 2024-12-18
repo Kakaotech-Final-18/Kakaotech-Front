@@ -215,6 +215,7 @@ wsServer.on('connection', socket => {
   // Todo 데이터 요청 처리
   socket.on('fetch_todo', (roomName, callback) => {
     const todo = rooms[`${roomName}_todo`];
+    console.log("[fetch_todo] ", todo);
     if (todo) {
       callback({ success: true, todo });
     } else {

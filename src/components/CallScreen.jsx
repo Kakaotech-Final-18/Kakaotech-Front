@@ -221,10 +221,10 @@ const CallScreen = () => {
 
       // 마지막에 들어온 사람은 이전에 들어온 사람의 이메일을 알 수 없음
       socket.on('another_user', users => {
-        console.log('Other users in room:', users);
+        console.log('Received users:', users);
         users.forEach(user => {
-          setPeerNickname(user.nickname);
-          setPeerProfileImage(user.profileImage);
+          setPeerNickname(user.nickname || '익명');
+          setPeerProfileImage(user.profileImage || DefaultProfile);
         });
       });
 
@@ -549,9 +549,17 @@ const CallScreen = () => {
   };
 
   const handleRoomFull = () => {
-    showModal('방이 이미 꽉 찼습니다.', () => {
-      console.log('Room is full.');
-    });
+    showModal(
+      <>
+        방이 이미 꽉 찼습니다.
+        <br />
+        통화 홈으로 이동합니다.
+      </>,
+      () => {
+        console.log('Room is full.');
+        navigate('/call/home');
+      }
+    );
   };
 
   const handlePeerLeft = async peerEmail => {

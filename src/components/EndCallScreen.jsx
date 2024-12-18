@@ -4,6 +4,7 @@ import './EndCallScreen.css';
 import CallControl from './CallControl';
 import { useSocket } from '../context/SocketContext';
 import { usePeer } from '../context/PeerContext';
+import Modal from './common/Modal';
 import axios from 'axios';
 import Modal from './common/Modal';
 
@@ -13,13 +14,25 @@ const EndCallScreen = () => {
   const [todos, setTodos] = useState([]);
   const [checkedTodos, setCheckedTodos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const socket = useSocket();
   const { peerNickname, peerProfileImage } = usePeer();
   const [isModalOpen, setIsModalOpen] = useState(false); 
 
   const searchParams = new URLSearchParams(location.search);
   const roomName = searchParams.get('roomName');
-  const { talkId, chatMessages } = location.state || {}; 
+  const { talkId, chatMessages } = location.state || {};
+
+  useEffect(() => {
+    const checkLoginStatus = () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        setIsModalOpen(true); // 로그인 상태가 아니면 모달 열기
+      }
+    };
+
+    checkLoginStatus();
+  }, []); // 컴포넌트가 처음 렌더링될 때만 실행
 
   useEffect(() => {
     const fetchTodos = async () => {
@@ -43,7 +56,7 @@ const EndCallScreen = () => {
             setIsLoading(false);
           });
         } else {
-          socket.emit('fetch_todo', roomName, (response) => {
+          socket.emit('fetch_todo', roomName, response => {
             if (response.success) {
               setTodos(response.todo);
               setCheckedTodos(new Array(response.todo.length).fill(false));
@@ -68,10 +81,14 @@ const EndCallScreen = () => {
   }, [roomName, chatMessages, socket]);
   
 
-  const handleCheckboxChange = (index) => {
+  // 체크박스 상태 업데이트
+  const handleCheckboxChange = index => {
     const newCheckedTodos = [...checkedTodos];
     newCheckedTodos[index] = !newCheckedTodos[index];
     setCheckedTodos(newCheckedTodos);
+  };
+  const handleModalClose = () => {
+    setIsModalOpen(false);
   };
 
   const handleConfirm = async () => {
@@ -139,14 +156,14 @@ const EndCallScreen = () => {
       <button className="select-button" onClick={handleConfirm}>
         선택 항목 기록하기
       </button>
-
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => { setIsModalOpen(false); navigate('/call/home'); }} 
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
         message={
           <>
-            로그인이 되어 있지 않아<br />
-            요약 기능을 사용할 수 없습니다.
+            로그인 하시면
+            <br />
+            통화 요약을 쓸 수 있어요!
           </>
         }
       />

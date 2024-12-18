@@ -114,12 +114,12 @@ const CallHomeScreen = () => {
       <div className="call-home-container">
         <div className="profile-section">
           <img
-            src={userInfo.profileImage}
+            src={userInfo.profileImage || DefaultProfile}
             alt="Default Profile"
             className="profile-picture"
             onError={e => {
-              e.target.onerror = null; // 무한 루프 방지
-              e.target.src = DefaultProfile; // 기본 이미지로 대체
+              e.target.onerror = null;
+              e.target.src = DefaultProfile;
             }}
           />
           <div className="profile-info">

@@ -536,22 +536,15 @@ const CallScreen = () => {
         socket.emit('leave_room', { roomName });
 
         navigate(`/call/end?roomName=${roomName}`, {
-          state: { talkId, chatMessages },
-        });
+          state: { 
+            talkId: talkId || null, 
+            chatMessages: chatMessages || [] 
+          },
+        });  
         console.log('leave_room event sent successfully.');
       }
     } catch (error) {
       console.error('Error while sending leave_room event:', error);
-    }
-    try {
-      // UI 이동 보장
-      console.log('Navigating to /call/end...');
-      navigate(`/call/end?roomName=${roomName}`, {
-        state: { talkId },
-      });
-      console.log('Navigation to /call/end completed.');
-    } catch (error) {
-      console.error('Error during navigation:', error);
     }
   };
 

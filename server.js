@@ -170,29 +170,47 @@ wsServer.on('connection', socket => {
   // 클라이언트로부터 AI 요약 요청 수신
   socket.on('request_ai_summary', async ({ roomName, combinedContent }) => {
     console.log(`[AI Summary] 요청 수신: Room - ${roomName}`);
-
+  
+    // 타이머 설정 (예: 5초)
+    const TIMEOUT_MS = 5000;
+  
+    // 타이머를 생성하는 함수
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ success: false, todo: [] }); // 타이머 완료 시 빈 배열 반환
+      }, TIMEOUT_MS);
+    });
+  
     try {
-      // AI 서버로 HTTP 요청 전송
-      const response = await axios.post(process.env.AI_SUMMARY, {
-        room_number: roomName,
-        sentence: combinedContent,
-      });
-
-      const { todo } = response.data;
-
-      // Todo 데이터를 rooms 객체에 저장
-      rooms[`${roomName}_todo`] = todo;
-      console.log(`[AI Summary] 요약 결과 저장 완료: Room - ${roomName}`);
-
-      // 요청한 클라이언트에게 결과 전달
-      socket.emit('ai_summary_response', { success: true, todo });
+      // AI 서버 요청 및 타이머 경쟁
+      const response = await Promise.race([
+        axios.post(process.env.AI_SUMMARY, {
+          room_number: roomName,
+          sentence: combinedContent,
+        }),
+        timeoutPromise,
+      ]);
+  
+      // 응답 처리
+      if (response.success === false) {
+        console.warn(`[AI Summary] 타임아웃 발생: Room - ${roomName}`);
+        rooms[`${roomName}_todo`] = [];
+        socket.emit('ai_summary_response', { success: true, todo: [] });
+      } else {
+        const { todo } = response.data;
+        rooms[`${roomName}_todo`] = todo; // 요약 결과 저장
+        console.log(`[AI Summary] 요약 결과 저장 완료: Room - ${roomName}`);
+        socket.emit('ai_summary_response', { success: true, todo });
+      }
     } catch (error) {
       console.error('[AI Summary] 요청 실패:', error.message);
-
-      // 에러 메시지를 클라이언트에게 전달
+  
+      // 에러 발생 시 빈 배열 저장
+      rooms[`${roomName}_todo`] = [];
       socket.emit('ai_summary_response', { success: false, message: error.message });
     }
   });
+  
 
   // Todo 데이터 요청 처리
   socket.on('fetch_todo', (roomName, callback) => {

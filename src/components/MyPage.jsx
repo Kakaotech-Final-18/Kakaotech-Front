@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import './MyPage.css';
 import { useUserInfo } from '../context/UserInfoContext';
-import axios from 'axios';
 import DefaultProfile from '../assets/default-profile.svg';
-import Modal from './common/Modal';
+import api from '../interceptors/LoginInterceptor'; 
+import Modal from './common/Modal'; 
 
 const MyPage = () => {
   const { userInfo, setUserInfo } = useUserInfo();
@@ -13,19 +13,16 @@ const MyPage = () => {
   const [modalMessage, setModalMessage] = useState('');
 
   useEffect(() => {
-    const fetchRoomDetails = async () => {
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/api/v1/details`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-              Accept: 'application/json',
-            },
-          }
-        );
-        setRoomDetails(response.data);
-        console.log(response.data);
+      const fetchRoomDetails = async () => {
+          try {
+              const response = await api.get('/api/v1/details', {
+                  headers: {
+                      Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+                      Accept: 'application/json',
+                  },
+              });
+              setRoomDetails(response.data);
+              console.log(response.data);
       } catch (error) {
         console.error('Error fetching room details:', error);
       }
@@ -55,31 +52,83 @@ const MyPage = () => {
         }
       );
 
+    const toggleTodoStatus = async (talkId, todoTitle) => {
+        try {
+            // roomDetails에서 talkId에 해당하는 항목 찾기
+            const updatedDetails = roomDetails.map((detail) => {
+                if (detail.talkId === talkId && detail.todoTitle === todoTitle) {
+                    // 새로운 상태 계산
+                    const newStatus = detail.todoStatus === 'PENDING' ? 'DONE' : 'PENDING';
+
+                    // 클라이언트 상태 업데이트
+                    return {
+                        ...detail,
+                        todoStatus: newStatus, // todoStatus만 업데이트
+                    };
+                }
+                return detail;
+            });
+
+            setRoomDetails(updatedDetails); // 클라이언트 상태 업데이트
+
+            // 서버에 상태 업데이트 요청
+            const updatedStatus = updatedDetails.find(
+                (detail) => detail.talkId === talkId && detail.todoTitle === todoTitle
+            ).todoStatus;
+
+            await api.patch(
+                '/api/v1/todo/update',
+                {
+                    talkId: talkId,
+                    todoTitle: todoTitle,
+                    newTodoStatus: updatedStatus,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+                        Accept: 'application/json',
+                    },
+                }
+            );
+
+            console.log(`Todo "${todoTitle}" updated successfully to "${updatedStatus}"`);
+        } catch (error) {
+            console.error("Error updating todo status:", error);
+        }
+    };
+  
+    const handleDeleteRoom = async (talkId) => {
+        try {
+            // 서버로 삭제 요청
+            await api.delete('/api/v1/details/${talkId}', {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+                    Accept: 'application/json',
+                },
+            });
       // 클라이언트 상태 업데이트: 삭제된 방 제거
       const updatedRoomDetails = roomDetails.filter(
         detail => detail.talkId !== talkId
       );
       setRoomDetails(updatedRoomDetails);
+            // 모달 상태 업데이트
+            setModalMessage('삭제되었습니다.');
+            setIsModalOpen(true);
+            console.log(`Room with talkId "${talkId}" deleted successfully.`);
+        } catch (error) {
+            console.error(`Error deleting room with talkId "${talkId}":`, error);
+        }
+    };
 
-      // 모달 상태 업데이트
-      setModalMessage('삭제되었습니다.');
-      setIsModalOpen(true);
-
-      console.log(`Room with talkId "${talkId}" deleted successfully.`);
-    } catch (error) {
-      console.error(`Error deleting room with talkId "${talkId}":`, error);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/logout`, null, {
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-          Accept: 'application/json',
-        },
-      });
+    const handleLogout = async () => {
+        try {
+            await api.post('/logout', null, {
+                withCredentials: true, // 쿠키 포함
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+                    Accept: 'application/json',
+                },
+            });
 
       localStorage.removeItem('accessToken');
       localStorage.removeItem('userInfo');

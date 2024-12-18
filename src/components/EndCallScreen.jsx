@@ -4,8 +4,7 @@ import './EndCallScreen.css';
 import CallControl from './CallControl';
 import { useSocket } from '../context/SocketContext';
 import { usePeer } from '../context/PeerContext';
-import Modal from './common/Modal';
-import axios from 'axios';
+import api from '../interceptors/LoginInterceptor'; 
 import Modal from './common/Modal';
 
 const EndCallScreen = () => {
@@ -106,8 +105,9 @@ const EndCallScreen = () => {
     }
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/api/v1/todo/create`,
+      // 서버로 요청 데이터 전송
+      const response = await api.post(
+        '/api/v1/todo/create',
         {
           todos: selectedTodos,
           talk: { talkId: talkId },

@@ -39,7 +39,7 @@ const CallControl = ({ nickname, profileImage, onEndCall }) => {
             e.target.onerror = null;
             e.target.src = DefaultProfile;
           }}
-        />
+        />        
         <span className="call-control-nickname">
           {showEndCallButton
             ? nickname

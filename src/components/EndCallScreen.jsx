@@ -18,7 +18,7 @@ const EndCallScreen = () => {
   // URL에서 roomName 가져오기
   const searchParams = new URLSearchParams(location.search);
   const roomName = searchParams.get('roomName');
-  const { talkId, chatMessages } = location.state || {}; 
+  const { talkId, chatMessages } = location.state || {};
 
   useEffect(() => {
     const fetchTodos = async () => {
@@ -27,7 +27,9 @@ const EndCallScreen = () => {
       try {
         if (chatMessages && chatMessages.length > 0) {
           // chatMessages가 비어있지 않은 경우 AI 요약 요청
-          const combinedContent = chatMessages.map(msg => msg.content).join(' ');
+          const combinedContent = chatMessages
+            .map(msg => msg.content)
+            .join(' ');
           const response = await axios.post(import.meta.env.VITE_AI_SUMMARY, {
             room_number: roomName,
             sentence: combinedContent,
@@ -38,7 +40,7 @@ const EndCallScreen = () => {
           socket.emit('ai_summary', roomName, todo);
         } else {
           // chatMessages가 비어있는 경우 서버에서 todo 요청
-          socket.emit('fetch_todo', roomName, (response) => {
+          socket.emit('fetch_todo', roomName, response => {
             if (response.success) {
               setTodos(response.todo);
               setCheckedTodos(new Array(response.todo.length).fill(false));
@@ -58,7 +60,7 @@ const EndCallScreen = () => {
   }, [roomName, chatMessages, socket]);
 
   // 체크박스 상태 업데이트
-  const handleCheckboxChange = (index) => {
+  const handleCheckboxChange = index => {
     const newCheckedTodos = [...checkedTodos];
     newCheckedTodos[index] = !newCheckedTodos[index];
     setCheckedTodos(newCheckedTodos);

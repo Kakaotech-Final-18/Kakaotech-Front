@@ -221,10 +221,10 @@ const CallScreen = () => {
 
       // 마지막에 들어온 사람은 이전에 들어온 사람의 이메일을 알 수 없음
       socket.on('another_user', users => {
-        console.log('Other users in room:', users);
+        console.log('Received users:', users);
         users.forEach(user => {
-          setPeerNickname(user.nickname);
-          setPeerProfileImage(user.profileImage);
+          setPeerNickname(user.nickname || '익명');
+          setPeerProfileImage(user.profileImage || DefaultProfile);
         });
       });
 
@@ -537,7 +537,7 @@ const CallScreen = () => {
 
         navigate(`/call/end?roomName=${roomName}`, {
           state: { talkId, chatMessages },
-        });  
+        });
         console.log('leave_room event sent successfully.');
       }
     } catch (error) {

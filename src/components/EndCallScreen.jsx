@@ -4,6 +4,7 @@ import './EndCallScreen.css';
 import CallControl from './CallControl';
 import { useSocket } from '../context/SocketContext';
 import { usePeer } from '../context/PeerContext';
+import Modal from './common/Modal';
 import axios from 'axios';
 
 const EndCallScreen = () => {
@@ -12,6 +13,7 @@ const EndCallScreen = () => {
   const [todos, setTodos] = useState([]);
   const [checkedTodos, setCheckedTodos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const socket = useSocket();
   const { peerNickname, peerProfileImage } = usePeer();
 
@@ -21,12 +23,22 @@ const EndCallScreen = () => {
   const { talkId, chatMessages } = location.state || {};
 
   useEffect(() => {
+    const checkLoginStatus = () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        setIsModalOpen(true); // 로그인 상태가 아니면 모달 열기
+      }
+    };
+
+    checkLoginStatus();
+  }, []); // 컴포넌트가 처음 렌더링될 때만 실행
+
+  useEffect(() => {
     const fetchTodos = async () => {
       setIsLoading(true);
 
       try {
         if (chatMessages && chatMessages.length > 0) {
-          // chatMessages가 비어있지 않은 경우 AI 요약 요청
           const combinedContent = chatMessages
             .map(msg => msg.content)
             .join(' ');
@@ -39,7 +51,6 @@ const EndCallScreen = () => {
           setCheckedTodos(new Array(todo.length).fill(false)); // 체크 초기화
           socket.emit('ai_summary', roomName, todo);
         } else {
-          // chatMessages가 비어있는 경우 서버에서 todo 요청
           socket.emit('fetch_todo', roomName, response => {
             if (response.success) {
               setTodos(response.todo);
@@ -66,7 +77,10 @@ const EndCallScreen = () => {
     setCheckedTodos(newCheckedTodos);
   };
 
-  // 선택 항목 저장
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
   const handleConfirm = async () => {
     const selectedTodos = todos.filter((_, index) => checkedTodos[index]);
 
@@ -76,7 +90,6 @@ const EndCallScreen = () => {
     }
 
     try {
-      // 서버로 요청 데이터 전송
       const response = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/api/v1/todo/create`,
         {
@@ -127,6 +140,17 @@ const EndCallScreen = () => {
       <button className="select-button" onClick={handleConfirm}>
         선택 항목 기록하기
       </button>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        message={
+          <>
+            로그인 하시면
+            <br />
+            통화 요약을 쓸 수 있어요!
+          </>
+        }
+      />
     </div>
   );
 };

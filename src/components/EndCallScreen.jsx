@@ -27,14 +27,21 @@ const EndCallScreen = () => {
       try {
         if (chatMessages && chatMessages.length > 0) {
           const combinedContent = chatMessages.map(msg => msg.content).join(' ');
-          const response = await axios.post(import.meta.env.VITE_AI_SUMMARY, {
-            room_number: roomName,
-            sentence: combinedContent,
+  
+          // Socket을 통해 Node.js 서버로 AI 요약 요청
+          socket.emit('request_ai_summary', { roomName, combinedContent });
+  
+          // 서버에서 반환되는 이벤트를 수신
+          socket.on('ai_summary_response', (data) => {
+            if (data.success) {
+              setTodos(data.todo);
+              setCheckedTodos(new Array(data.todo.length).fill(false));
+              console.log('AI 요약 완료:', data.todo);
+            } else {
+              console.error('AI 요약 실패:', data.message);
+            }
+            setIsLoading(false);
           });
-          const { todo } = response.data;
-          setTodos(todo);
-          setCheckedTodos(new Array(todo.length).fill(false));
-          socket.emit('ai_summary', roomName, todo);
         } else {
           socket.emit('fetch_todo', roomName, (response) => {
             if (response.success) {
@@ -43,17 +50,23 @@ const EndCallScreen = () => {
             } else {
               console.error('Todo 데이터 없음:', response.message);
             }
+            setIsLoading(false);
           });
         }
       } catch (error) {
-        console.error('Todo 데이터 로드 중 오류:', error);
-      } finally {
+        console.error('데이터 요청 중 오류 발생:', error);
         setIsLoading(false);
       }
     };
-
+  
     fetchTodos();
+  
+    // Clean-up: 이벤트 리스너 제거
+    return () => {
+      socket.off('ai_summary_response');
+    };
   }, [roomName, chatMessages, socket]);
+  
 
   const handleCheckboxChange = (index) => {
     const newCheckedTodos = [...checkedTodos];

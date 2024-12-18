@@ -167,8 +167,31 @@ wsServer.on('connection', socket => {
     socket.to(roomName).emit('ice', ice);
   });
 
-  socket.on('ai_summary', (roomName, todo) => {
-    rooms[`${roomName}_todo`] = todo;
+  // 클라이언트로부터 AI 요약 요청 수신
+  socket.on('request_ai_summary', async ({ roomName, combinedContent }) => {
+    console.log(`[AI Summary] 요청 수신: Room - ${roomName}`);
+
+    try {
+      // AI 서버로 HTTP 요청 전송
+      const response = await axios.post(process.env.AI_SUMMARY, {
+        room_number: roomName,
+        sentence: combinedContent,
+      });
+
+      const { todo } = response.data;
+
+      // Todo 데이터를 rooms 객체에 저장
+      rooms[`${roomName}_todo`] = todo;
+      console.log(`[AI Summary] 요약 결과 저장 완료: Room - ${roomName}`);
+
+      // 요청한 클라이언트에게 결과 전달
+      socket.emit('ai_summary_response', { success: true, todo });
+    } catch (error) {
+      console.error('[AI Summary] 요청 실패:', error.message);
+
+      // 에러 메시지를 클라이언트에게 전달
+      socket.emit('ai_summary_response', { success: false, message: error.message });
+    }
   });
 
   // Todo 데이터 요청 처리

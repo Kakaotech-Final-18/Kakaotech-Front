@@ -556,9 +556,17 @@ const CallScreen = () => {
   };
 
   const handleRoomFull = () => {
-    showModal('방이 이미 꽉 찼습니다.', () => {
-      console.log('Room is full.');
-    });
+    showModal(
+      <>
+        방이 이미 꽉 찼습니다.
+        <br />
+        통화 홈으로 이동합니다.
+      </>,
+      () => {
+        console.log('Room is full.');
+        navigate('/call/home');
+      }
+    );
   };
 
   const handlePeerLeft = async peerEmail => {

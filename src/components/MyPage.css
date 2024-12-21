@@ -187,3 +187,8 @@ body {
   margin-top: 16px;
   color: var(--color-text-sub);
 }
+
+.checked {
+  text-decoration: line-through !important;
+  color: gray !important;
+}

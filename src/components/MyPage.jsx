@@ -87,7 +87,7 @@ const MyPage = () => {
   const handleDeleteRoom = async (talkId) => {
     try {
       // 서버로 삭제 요청
-      await api.delete('/api/v1/details/${talkId}', {
+      await api.delete(`/api/v1/details/${talkId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
           Accept: 'application/json',

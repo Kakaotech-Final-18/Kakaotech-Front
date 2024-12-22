@@ -6,9 +6,8 @@ import PhoneIcon from '../assets/phone-icon.svg';
 import DefaultProfile from '../assets/default-profile.svg';
 import './CallHomeScreen.css';
 import { useUserInfo } from '../context/UserInfoContext';
-import api from '../interceptors/LoginInterceptor';
+import api from '../interceptors/LoginInterceptor'; 
 import { useRoomName } from '../hooks/useRoomName';
-import Modal from './common/Modal';
 
 const CallHomeScreen = () => {
   const { encodeRoomName } = useRoomName();
@@ -19,27 +18,26 @@ const CallHomeScreen = () => {
   const { userInfo, setUserInfo } = useUserInfo();
   const [roomName, setRoomName] = useState('');
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMessage, setModalMessage] = useState('');
-
   const fetchUserInfo = accessToken => {
     try {
-      api
-        .get('/api/v1/user/info', {
+      api.get(
+        '/api/v1/user/info',
+        {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             Accept: 'application/json',
           },
-        })
-        .then(response => {
-          const data = response.data;
-          setUserInfo({
-            nickname: data.nickname,
-            email: data.email,
-            profileImage: data.profileImage,
-          });
-          localStorage.setItem('userInfo', JSON.stringify(data));
+        }
+      )
+      .then((response) => {
+        const data = response.data;
+        setUserInfo({
+          nickname: data.nickname,
+          email: data.email,
+          profileImage: data.profileImage,
         });
+        localStorage.setItem('userInfo', JSON.stringify(data));
+      })
     } catch (error) {
       console.error('Error fetching user info:', error);
     }
@@ -47,19 +45,12 @@ const CallHomeScreen = () => {
 
   useEffect(() => {
     const accessToken = localStorage.getItem('accessToken');
-    if (accessToken) {
+    if(accessToken) {
       fetchUserInfo(accessToken);
     }
   }, []);
 
   const handleCreateRoom = () => {
-    const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) {
-      setModalMessage('로그인이 필요해요.');
-      setIsModalOpen(true);
-      return;
-    }
-
     socket.emit('create_room', roomName => {
       setRoomName(roomName);
       const encodedRoomName = encodeRoomName(roomName);
@@ -68,11 +59,6 @@ const CallHomeScreen = () => {
       console.log('Room created with encoded link:', link);
       setCreateButtonText('방 생성 완료!');
     });
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    navigate('/'); // 온보딩 페이지로 이동
   };
 
   const handleJoinRoom = () => {
@@ -96,10 +82,9 @@ const CallHomeScreen = () => {
           )
           .then(response => {
             console.log(response);
-            navigate(
-              `/call/${encodeRoomName(`${roomName}?talkId=${response.data}`)}`,
-              {}
-            );
+            navigate(`/call/${encodeRoomName(`${roomName}?talkId=${response.data}`)}`, {
+         
+            });
           });
       } catch (error) {
         console.error('Error creating room in DB:', error);
@@ -109,17 +94,6 @@ const CallHomeScreen = () => {
 
   return (
     <div className="call-home-view">
-      <Modal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        message={
-          <>
-            {modalMessage}
-            <br />
-            해당 페이지로 이동합니다.
-          </>
-        }
-      />
       <div className="call-home-container">
         <div className="profile-section">
           <img

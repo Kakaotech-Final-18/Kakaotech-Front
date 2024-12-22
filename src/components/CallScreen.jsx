@@ -77,8 +77,17 @@ const CallScreen = () => {
   }, []);
 
   useEffect(() => {
+    const splitRoomName = roomName.split('?talkId=');
+    const mainRoomName = splitRoomName[0]; // "Mzk4OTZmZGMtYzYzNC00OQ=="
+    talkId.current = splitRoomName[1]; // "272"
+
+    console.log('[callscreen mainRoomName] :', mainRoomName);
+    console.log('[callscreen talkId] :', talkId.current);
+  }, [roomName]);
+
+  useEffect(() => {
     console.log('Decoded Room Name:', decodedRoomName);
-    if (!decodedRoomName) {
+    if (!roomName) {
       showModal(
         <>
           잘못된 방 이름입니다.
@@ -90,7 +99,7 @@ const CallScreen = () => {
         }
       );
     }
-  }, [decodedRoomName]);
+  }, [roomName]);
 
   useEffect(() => {
     const storedUserInfo = localStorage.getItem('userInfo');
@@ -109,7 +118,6 @@ const CallScreen = () => {
   }, [setUserInfo]);
 
   useEffect(() => {
-    console.log('Decoded Room Name:', decodedRoomName);
     const initialize = async () => {
       if (socket && socket.connected) {
         registerSocketEvents(socket);

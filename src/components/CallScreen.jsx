@@ -11,26 +11,13 @@ import { usePeer } from '../context/PeerContext';
 import Modal from './common/Modal';
 import { useRoomName } from '../hooks/useRoomName';
 import './CallScreen.css';
-import api from '../interceptors/LoginInterceptor'; 
-
+import api from '../interceptors/LoginInterceptor';
 
 const CallScreen = () => {
   const { roomName: decodedRoomName } = useRoomName(useParams().roomName);
-  // const { talkId: }
   const roomName = decodedRoomName;
- 
-  // const [ talkId, setTalkId ] = useState('');
-
   const talkId = useRef('');
-  useEffect(() => {
-    const splitRoomName = roomName.split("?talkId=");
-    const mainRoomName = splitRoomName[0]; // "Mzk4OTZmZGMtYzYzNC00OQ=="
-    talkId.current = splitRoomName[1]; // "272"
 
-
-    console.log("[callscreen mainRoomName] :", mainRoomName);
-    console.log("[callscreen talkId] :", talkId.current);
-}, [roomName]);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -80,6 +67,23 @@ const CallScreen = () => {
       setModalCallback(null);
     }
   };
+
+  // 브라우저 종료, 뒤로 가기 감지해서 종료 로직 실행
+  useEffect(() => {
+    const handleBeforeUnload = () => handleLeaveRoom();
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  useEffect(() => {
+    const splitRoomName = roomName.split('?talkId=');
+    const mainRoomName = splitRoomName[0]; // "Mzk4OTZmZGMtYzYzNC00OQ=="
+    talkId.current = splitRoomName[1]; // "272"
+
+    console.log('[callscreen mainRoomName] :', mainRoomName);
+    console.log('[callscreen talkId] :', talkId.current);
+  }, [roomName]);
 
   useEffect(() => {
     console.log('Decoded Room Name:', decodedRoomName);
@@ -341,18 +345,15 @@ const CallScreen = () => {
   };
 
   const handleNotificationHi = peerEmail => {
-    console.log("[callscreen notifiactionhi] ",talkId.current);
-    console.log("[callscreen notifiactionhi] ",peerEmail);
+    console.log('[callscreen notifiactionhi] ', talkId.current);
+    console.log('[callscreen notifiactionhi] ', peerEmail);
     api
-      .post(
-        '/api/v1/talk/peer',
-        {
-          talkId: talkId.current, // useRef로 저장된 talkId 사용
-          receiverEmail: peerEmail,
-        },
-      )
+      .post('/api/v1/talk/peer', {
+        talkId: talkId.current, // useRef로 저장된 talkId 사용
+        receiverEmail: peerEmail,
+      })
       .then(response => {
-        console.log("[callscreen notifiactionhi] ", response);
+        console.log('[callscreen notifiactionhi] ', response);
         const imageUrl =
           response.data.profileImage === 'default'
             ? DefaultProfile
@@ -545,11 +546,11 @@ const CallScreen = () => {
         socket.emit('leave_room', { roomName });
 
         navigate(`/call/end?roomName=${roomName}`, {
-          state: { 
-            talkId: talkId.current || null, 
-            chatMessages: chatMessages || [] 
+          state: {
+            talkId: talkId.current || null,
+            chatMessages: chatMessages || [],
           },
-        });  
+        });
         console.log('leave_room event sent successfully.');
       }
     } catch (error) {

@@ -51,6 +51,11 @@ const CallHomeScreen = () => {
     }
   }, []);
 
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    navigate('/');
+  };
+
   const handleCreateRoom = () => {
     if (!localStorage.getItem('accessToken')) {
       setModalMessage(
@@ -65,48 +70,39 @@ const CallHomeScreen = () => {
     }
 
     socket.emit('create_room', roomName => {
-      setRoomName(roomName);
       const encodedRoomName = encodeRoomName(roomName);
-      const link = `${window.location.origin}/call/${encodedRoomName}`;
-      setRoomLink(link);
-      console.log('Room created with encoded link:', link);
-      setCreateButtonText('방 생성 완료!');
-    });
-  };
 
-  const handleModalClose = () => {
-    setIsModalOpen(false);
-    navigate('/');
+      // DB에 방 정보를 저장
+      api
+        .post(
+          '/api/v1/talk/create',
+          { roomName: roomName },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+              Accept: 'application/json',
+            },
+          }
+        )
+        .then(response => {
+          const link = `${window.location.origin}/call/${encodeRoomName(
+            `${roomName}?talkId=${response.data}`
+          )}`;
+          setRoomLink(link); // 최종적으로 공유할 링크 저장
+          setRoomName(roomName);
+          setCreateButtonText('방 생성 완료!');
+          console.log('Room created with encoded link:', link);
+        })
+        .catch(error => {
+          console.error('Error creating room in DB:', error);
+        });
+    });
   };
 
   const handleJoinRoom = () => {
     if (roomLink) {
-      const roomName = roomLink.split('/').pop();
-
-      try {
-        api
-          .post(
-            '/api/v1/talk/create',
-            {
-              roomName: roomName,
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                Accept: 'application/json',
-              },
-            }
-          )
-          .then(response => {
-            console.log(response);
-            navigate(
-              `/call/${encodeRoomName(`${roomName}?talkId=${response.data}`)}`,
-              {}
-            );
-          });
-      } catch (error) {
-        console.error('Error creating room in DB:', error);
-      }
+      const relativePath = roomLink.replace(window.location.origin, '');
+      navigate(relativePath);
     }
   };
 
@@ -144,7 +140,7 @@ const CallHomeScreen = () => {
         {roomLink && (
           <div className="room-link-container">
             <p className="room-link-title">통화 코드</p>
-            <div className="room-code">{roomLink.split('/').pop()}</div>
+            <div className="room-code">{encodeRoomName(roomName)}</div>
             <div className="button-group">
               <ShareButton roomLink={roomLink} className="custom-button" />
               <button

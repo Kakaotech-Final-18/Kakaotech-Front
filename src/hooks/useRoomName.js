@@ -19,10 +19,20 @@ export const useRoomName = encodedRoomName => {
     }
   };
 
-  const roomName = useMemo(
-    () => decodeRoomName(encodedRoomName),
-    [encodedRoomName]
-  );
+  const roomName = useMemo(() => {
+    if (!encodedRoomName) {
+      console.warn('No room name provided for decoding.');
+      return null;
+    }
+
+    const decodedName = decodeRoomName(encodedRoomName);
+    if (!decodedName) {
+      console.warn('Decoded room name is invalid:', encodedRoomName);
+      return null;
+    }
+
+    return decodedName;
+  }, [encodedRoomName]);
 
   return { roomName, encodeRoomName, decodeRoomName };
 };

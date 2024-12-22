@@ -228,6 +228,10 @@ wsServer.on('connection', socket => {
   // 방 퇴장 로직
   socket.on('leave_room', async data => {
     const { roomName } = data;
+    if (!rooms[roomName]) {
+      console.warn(`[leave_room] Room not found: ${roomName}`);
+      return;
+    }
     const room = rooms[roomName];
 
     socket.off('audio_chunk', handleAudioChunk);
@@ -235,7 +239,7 @@ wsServer.on('connection', socket => {
 
     const userIndex = room?.findIndex(user => user.id === socket.id);
     if (userIndex !== -1) {
-      const userEmail = room[userIndex].email;
+      const userEmail = room[userIndex]?.email;
       room.splice(userIndex, 1);
       socket.to(roomName).emit('peer_left', userEmail); // 다른 사용자가 나감을 알림
       console.log(`${userEmail} has left the room: ${roomName}`);

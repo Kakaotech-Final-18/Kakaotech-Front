@@ -170,17 +170,17 @@ wsServer.on('connection', socket => {
   // 클라이언트로부터 AI 요약 요청 수신
   socket.on('request_ai_summary', async ({ roomName, combinedContent }) => {
     console.log(`[AI Summary] 요청 수신: Room - ${roomName}`);
-  
+
     // 타이머 설정 (예: 5초)
     const TIMEOUT_MS = 5000;
-  
+
     // 타이머를 생성하는 함수
-    const timeoutPromise = new Promise((resolve) => {
+    const timeoutPromise = new Promise(resolve => {
       setTimeout(() => {
         resolve({ success: false, todo: [] }); // 타이머 완료 시 빈 배열 반환
       }, TIMEOUT_MS);
     });
-  
+
     try {
       // AI 서버 요청 및 타이머 경쟁
       const response = await Promise.race([
@@ -190,7 +190,7 @@ wsServer.on('connection', socket => {
         }),
         timeoutPromise,
       ]);
-  
+
       // 응답 처리
       if (response.success === false) {
         console.warn(`[AI Summary] 타임아웃 발생: Room - ${roomName}`);
@@ -204,18 +204,20 @@ wsServer.on('connection', socket => {
       }
     } catch (error) {
       console.error('[AI Summary] 요청 실패:', error.message);
-  
+
       // 에러 발생 시 빈 배열 저장
       rooms[`${roomName}_todo`] = [];
-      socket.emit('ai_summary_response', { success: false, message: error.message });
+      socket.emit('ai_summary_response', {
+        success: false,
+        message: error.message,
+      });
     }
   });
-  
 
   // Todo 데이터 요청 처리
   socket.on('fetch_todo', (roomName, callback) => {
     const todo = rooms[`${roomName}_todo`];
-    console.log("[fetch_todo] ", todo);
+    console.log('[fetch_todo] ', todo);
     if (todo) {
       callback({ success: true, todo });
     } else {
@@ -313,7 +315,39 @@ wsServer.on('connection', socket => {
   // 연결 해제 처리
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+
+    // socket.id로 사용자가 속한 방 찾기
+    const userRoomName = Object.keys(rooms).find(roomName =>
+      rooms[roomName].some(user => user.id === socket.id)
+    );
+
+    if (userRoomName) {
+      console.log(`User was in room: ${userRoomName}`);
+      const userIndex = rooms[userRoomName]?.findIndex(
+        user => user.id === socket.id
+      );
+
+      if (userIndex !== -1) {
+        const userEmail = rooms[userRoomName][userIndex].email;
+        rooms[userRoomName].splice(userIndex, 1); // 유저 정보 제거
+
+        // 방 정리
+        const userCount =
+          wsServer.sockets.adapter.rooms.get(userRoomName)?.size || 0;
+        if (userCount === 0) {
+          console.log(
+            `[Room] Last user left. Cleaning up room: ${userRoomName}`
+          );
+          roomManager.removeRoom(userRoomName); // RoomManager 정리 호출
+          delete rooms[userRoomName]; // 방 제거
+        } else {
+          // 상대방에게 알림
+          socket.to(userRoomName).emit('peer_left', userEmail);
+        }
+      }
+    }
   });
+
   socket.on('request_tts', async (text, roomName) => {
     try {
       // 요청 데이터 설정

@@ -1,25 +1,45 @@
-import { useEffect, React } from 'react';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Login.css';
 import GoogleIcon from '/google-icon.svg';
 import KakaoIcon from '/kakao-icon.svg';
+import axios from 'axios';
 
 const Login = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchTokenOnce = async () => {
+      const localStorageAccess = localStorage.getItem('accessToken');
+      if (localStorageAccess) {
+        navigate('/call/home'); // 이미 토큰이 있으면 바로 리다이렉트
+        return;
+      }
+
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/access`,
+          {},
+          { withCredentials: true }
+        );
+        const accessToken = response.headers['authorization']?.replace('Bearer ', '');
+        if (accessToken) {
+          localStorage.setItem('accessToken', accessToken);
+          console.log('Access Token 저장 완료:', accessToken);
+          navigate('/call/home'); // 토큰 발급 후 리다이렉트
+        }
+      } catch (error) {
+        console.error('토큰 요청 실패:', error);
+      }
+    };
+
+    fetchTokenOnce();
+  }, []);
+
   const handleSocialLogin = provider => {
     const loginUrl = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/${provider}`;
-    // 브라우저를 지정된 소셜 로그인 URL로 리다이렉트
-    window.location.href = loginUrl;
+    window.location.href = loginUrl; // 소셜 로그인 URL로 리다이렉트
   };
-
-  // 리디렉션 후 Access Token 처리
-  // useEffect(() => {
-  //   const params = new URLSearchParams(window.location.search);
-  //   const accessToken = params.get('accessToken');
-
-  //   if (accessToken) {
-  //     localStorage.setItem('Authorization', `Bearer ${accessToken}`);
-  //     console.log('Access Token 저장:', accessToken);
-  //   }
-  // }, []);
 
   return (
     <div className="login-container">

@@ -228,14 +228,15 @@ wsServer.on('connection', socket => {
   // 방 퇴장 로직
   socket.on('leave_room', async data => {
     const { roomName } = data;
+    const room = rooms[roomName];
 
     socket.off('audio_chunk', handleAudioChunk);
     console.log(`[Audio] audio_chunk listener removed for room: ${roomName}`);
 
-    const userIndex = rooms[roomName]?.findIndex(user => user.id === socket.id);
+    const userIndex = room?.findIndex(user => user.id === socket.id);
     if (userIndex !== -1) {
-      const userEmail = rooms[roomName][userIndex].email;
-      rooms[roomName].splice(userIndex, 1);
+      const userEmail = room[userIndex].email;
+      room.splice(userIndex, 1);
       socket.to(roomName).emit('peer_left', userEmail); // 다른 사용자가 나감을 알림
       console.log(`${userEmail} has left the room: ${roomName}`);
     }

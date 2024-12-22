@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import OnboardingScreen from './components/OnboardingScreen';
 import CallHomeScreen from './components/CallHomeScreen';
@@ -19,7 +25,7 @@ const App = () => {
     const fetchTokenOnce = async () => {
       const localStorageAccess = localStorage.getItem('accessToken');
       const currentPath = window.location.pathname;
-  
+
       if (localStorageAccess) {
         if (currentPath === '/') {
           navigate('/call/home');
@@ -27,15 +33,18 @@ const App = () => {
         setLoading(false); // 이미 토큰이 있으면 fetchToken 실행하지 않음
         return;
       }
-  
+
       try {
         const response = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/access`,
           {},
           { withCredentials: true }
         );
-        const accessToken = response.headers['authorization']?.replace('Bearer ', '');
-  
+        const accessToken = response.headers['authorization']?.replace(
+          'Bearer ',
+          ''
+        );
+
         if (accessToken) {
           localStorage.setItem('accessToken', accessToken);
           console.log('Access Token 저장 완료:', accessToken);
@@ -49,10 +58,9 @@ const App = () => {
         setLoading(false);
       }
     };
-  
+
     fetchTokenOnce();
   }, []);
-  
 
   if (loading) {
     return <div>로딩 중...</div>; // 로딩 상태 표시
@@ -69,6 +77,7 @@ const App = () => {
               <Route path="/call/:roomName" element={<CallScreen />} />
               <Route path="/call/end" element={<EndCallScreen />} />
               <Route path="/mypage" element={<MyPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </MainLayout>
         </SocketProvider>

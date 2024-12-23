@@ -1,7 +1,8 @@
 import { io } from 'socket.io-client';
 
 let socket;
-
+// 디버깅 활성화
+localStorage.debug = 'socket.io-client:socket';
 /**
  * Socket 초기화 함수
  */
@@ -20,6 +21,9 @@ export const initializeSocket = () => {
       console.warn('Socket disconnected:', reason);
       if (reason === 'io server disconnect') {
         // 서버에서 명시적으로 연결을 끊었을 때, 재연결 시도
+        console.log(
+          'Server disconnected the connection. Attempting reconnection...'
+        );
         socket.connect();
       }
     });
@@ -29,6 +33,10 @@ export const initializeSocket = () => {
       socket.on('connect', () => {
         console.log('Socket connected:', socket.id);
         console.log('Connected to Socket.IO server:', serverUrl);
+        console.log(
+          'Connected to Socket.IO server via:',
+          socket.io.engine.transport.name
+        ); // 현재 사용 중인 transport
         resolve(socket);
       });
 

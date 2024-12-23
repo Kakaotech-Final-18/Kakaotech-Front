@@ -13,6 +13,10 @@ export const initializeSocket = () => {
     // 연결 끊김 확인
     socket.on('disconnect', reason => {
       console.warn('Socket disconnected:', reason);
+      if (reason === 'io server disconnect') {
+        // 서버에서 명시적으로 연결을 끊었을 때, 재연결 시도
+        socket.connect();
+      }
     });
 
     // 연결 확인
@@ -21,6 +25,16 @@ export const initializeSocket = () => {
         console.log('Socket connected:', socket.id);
         console.log('Connected to Socket.IO server:', serverUrl);
         resolve(socket);
+      });
+
+      // 연결 실패 이벤트
+      socket.on('connect_error', error => {
+        console.error('Socket connection error:', error);
+      });
+
+      // WebSocket 업그레이드 확인
+      socket.on('upgrade', transport => {
+        console.log(`Transport upgraded to: ${transport}`);
       });
     });
   }

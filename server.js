@@ -234,7 +234,7 @@ wsServer.on('connection', socket => {
 
     const userIndex = rooms[roomName]?.findIndex(user => user.id === socket.id);
     if (userIndex !== -1) {
-      const userEmail = rooms[roomName][userIndex].email;
+      const userEmail = rooms[roomName][userIndex]?.email;
       rooms[roomName].splice(userIndex, 1);
       socket.to(roomName).emit('peer_left', userEmail); // 다른 사용자가 나감을 알림
       console.log(`${userEmail} has left the room: ${roomName}`);

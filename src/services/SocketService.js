@@ -13,6 +13,9 @@ export const initializeSocket = () => {
       reconnection: true, // 연결 끊김 시 재시도 활성화
       reconnectionAttempts: 5, // 재시도 횟수 제한
       reconnectionDelay: 1000, // 재시도 간격(ms)
+      polling: {
+        interval: 125, // 폴링 간격(ms)
+      },
     });
 
     // 연결 끊김 확인

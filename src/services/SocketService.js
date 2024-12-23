@@ -1,4 +1,3 @@
-// Socket.IO 관련 로직
 import { io } from 'socket.io-client';
 
 let socket;
@@ -9,7 +8,7 @@ let socket;
 export const initializeSocket = () => {
   if (!socket) {
     const serverUrl = import.meta.env.VITE_SOCKET_URL || window.location.origin;
-    socket = io();
+    socket = io(serverUrl);
 
     // 연결 끊김 확인
     socket.on('disconnect', reason => {

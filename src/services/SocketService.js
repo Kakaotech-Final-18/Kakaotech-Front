@@ -2,7 +2,7 @@ import { io } from 'socket.io-client';
 
 let socket;
 // 디버깅 활성화
-localStorage.debug = 'socket.io-client:socket';
+localStorage.debug = 'socket.io-client:*';
 /**
  * Socket 초기화 함수
  */

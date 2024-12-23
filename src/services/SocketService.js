@@ -7,7 +7,7 @@ let socket;
  */
 export const initializeSocket = () => {
   if (!socket) {
-    const serverUrl = import.meta.env.VITE_SOCKET_URL || window.location.origin;
+    const serverUrl = import.meta.env.VITE_SOCKET_URL;
     socket = io(serverUrl);
 
     // 연결 끊김 확인

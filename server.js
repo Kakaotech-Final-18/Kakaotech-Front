@@ -354,7 +354,7 @@ wsServer.on('connection', socket => {
       const requestData = {
         text: text,
         room_number: roomName,
-        voice_type: 'male1',
+        voice_type: 'female2',
       };
 
       // TTS 서버로 POST 요청 전송

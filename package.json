@@ -9,7 +9,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "node server.js",
+    "start": "DEBUG=socket.io:* node server.js",
     "dev:server": "nodemon server.js"
   },
   "dependencies": {

@@ -473,7 +473,7 @@ const CallScreen = () => {
   };
 
   const handleDisconnect = socket => {
-    console.log('User disconnected: ${socket.id}');
+    console.log(`User disconnected: ${socket.id}`);
 
     // 각 방에서 해당 소켓 ID 제거
     for (const roomName in rooms) {
@@ -483,13 +483,13 @@ const CallScreen = () => {
       if (userIndex !== -1) {
         const userEmail = rooms[roomName][userIndex].email;
         rooms[roomName].splice(userIndex, 1);
-        console.log('[Room] ${userEmail} removed from room: ${roomName}');
+        console.log(`[Room] ${userEmail} removed from room: ${roomName}`);
 
         // 방에 남은 유저가 없으면 방 정리
         const userCount =
           wsServer.sockets.adapter.rooms.get(roomName)?.size || 0;
         if (userCount === 0) {
-          console.log('[Room] Last user left. Cleaning up room: ${roomName}');
+          console.log(`[Room] Last user left. Cleaning up room: ${roomName}`);
           transcribeService.stopTranscribe(roomName); // AWS Transcribe 및 스트림 종료
           roomManager.removeRoom(roomName);
           delete rooms[roomName];

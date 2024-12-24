@@ -24,7 +24,7 @@ const app = express();
 // 경로 설정 (현재 디렉토리 기준으로 dist 폴더 사용)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const buildPath = path.join(__dirname, 'dist');
+const buildPath = process.env.BUILD_PATH || path.join(__dirname, 'dist');
 
 // React 정적 파일 제공
 app.use(express.static(buildPath));

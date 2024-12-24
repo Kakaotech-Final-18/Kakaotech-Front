@@ -37,7 +37,9 @@ app.get('*', (req, res) => {
 const httpServer = http.createServer(app);
 const wsServer = new Server(httpServer, {
   cors: {
-    origin: process.env.VITE_SOCKET_URL || 'http://localhost:3000', // Vite 개발 서버 주소
+    //origin: process.env.VITE_SOCKET_URL || 'http://localhost:3000', // Vite 개발 서버 주소
+    //origin: process.env.VITE_SOCKET_URL || 'https://ptks.link',
+    origin: '*',
     methods: ['GET', 'POST'],
     credentials: true,
   },

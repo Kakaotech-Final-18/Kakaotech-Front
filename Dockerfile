@@ -11,7 +11,8 @@ RUN npm install
 COPY . .
 
 # 환경변수로 모드 설정 및 빌드
-ARG NODE_ENV=development
+# ARG NODE_ENV=development
+ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 RUN npm run build -- --mode ${NODE_ENV}
 

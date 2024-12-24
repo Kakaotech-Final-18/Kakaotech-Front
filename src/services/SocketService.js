@@ -8,8 +8,9 @@ localStorage.debug = 'socket.io-client:*';
  */
 export const initializeSocket = () => {
   if (!socket) {
-    const serverUrl = import.meta.env.VITE_SOCKET_URL || 'https://ptks.link';
+    const serverUrl = import.meta.env.VITE_SOCKET_URL;
     socket = io(serverUrl, {
+      path: '/socket.io',
       transports: ['websocket'], // websocket 만 사용하게 설정
       reconnection: true, // 연결 끊김 시 재시도 활성화
       reconnectionAttempts: 5, // 재시도 횟수 제한

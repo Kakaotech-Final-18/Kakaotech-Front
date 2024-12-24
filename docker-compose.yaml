@@ -2,34 +2,36 @@ services:
   traefik:
     image: traefik:v2.5
     command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
+      - '--api.insecure=true'
+      - '--providers.docker=true'
+      - '--providers.docker.exposedbydefault=false'
+      - '--entrypoints.web.address=:80'
     ports:
-      - "80:80"
-      - "8081:8080"  # Traefik dashboard
+      - '80:80'
+      - '8081:8080' # Traefik dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - app-network
 
   frontend:
-    build: 
+    build:
       context: ${FRONTEND_PATH}
       args:
-        - NODE_ENV=development
+        - NODE_ENV=production
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`test.ptks.link`)"
-      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.frontend.rule=Host(`127.0.0.1`)'
+      - 'traefik.http.services.frontend.loadbalancer.server.port=3000'
     ports:
-      - "3000:3000"
+      - '3000:3000'
     networks:
       - app-network
     environment:
-      - VITE_SOCKET_URL=http://test.ptks.link
-      - VITE_API_BASE_URL=http://auth-test.ptks.link/
+      # - VITE_SOCKET_URL=http://test.ptks.link
+      - NODE_ENV=production
+      - VITE_SOCKET_URL=http://127.0.0.1:3000
+      - VITE_API_BASE_URL=http://127.0.0.1:8080
       - AI_RECOMMENDATIONS=http://ai-test.ptks.link/recommendations
       - AI_SUMMARY=http://ai-test.ptks.link/summary
 
@@ -37,32 +39,31 @@ services:
     build:
       context: ${BACKEND_PATH}
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.auth.rule=Host(`auth-test.ptks.link`)"
-      - "traefik.http.services.auth.loadbalancer.server.port=8080"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.auth.rule=Host(`127.0.0.1`)'
+      - 'traefik.http.services.auth.loadbalancer.server.port=8080'
     ports:
-      - "8080:8080"
+      - '8080:8080'
     networks:
       - app-network
     volumes:
       - /tmp:/tmp
     environment:
-      - NGROK_URL=http://test.ptks.link
-      - REDIRECT_URL=http://auth-test.ptks.link/login/oauth2/code/kakao
+      - NGROK_URL=http://localhost:3000
+      - REDIRECT_URL=http://127.0.0.1:8080/login/oauth2/code/kakao
       - TEMPO_URL=http://tempo:4317
 
-  ai:
-    build:
-      context: ${AI_PATH}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.ai.rule=Host(`ai-test.ptks.link`)"
-      - "traefik.http.services.ai.loadbalancer.server.port=8000"
-    ports:
-      - "8000:8000"
-    networks:
-      - app-network
-
+  # ai:
+  #   build:
+  #     context: ${AI_PATH}
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.ai.rule=Host(`ai-test.ptks.link`)"
+  #     - "traefik.http.services.ai.loadbalancer.server.port=8000"
+  #   ports:
+  #     - "8000:8000"
+  #   networks:
+  #     - app-network
 networks:
   app-network:
     driver: bridge

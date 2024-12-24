@@ -5,7 +5,7 @@ export const useRoomName = encodedRoomName => {
     try {
       return atob(encoded); // Base64 디코딩
     } catch (error) {
-      console.error('Failed to decode room name:', error);
+      console.warn('Failed to decode room name:', error);
       return null;
     }
   };
@@ -14,7 +14,7 @@ export const useRoomName = encodedRoomName => {
     try {
       return btoa(roomName); // Base64 인코딩
     } catch (error) {
-      console.error('Failed to encode room name:', error);
+      console.warn('Failed to encode room name:', error);
       return null;
     }
   };
